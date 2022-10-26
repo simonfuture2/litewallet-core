@@ -1,4 +1,3 @@
-# breadwallet-core
-SPV bitcoin C library
-
-[getting started](https://github.com/breadwallet/breadwallet-core/wiki)
+# litewallet-core
+ A third generation SPV litecoin C library from the original breadwallet-core, then loafwallet-core
+ 
