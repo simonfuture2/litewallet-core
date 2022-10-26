@@ -1,26 +1,6 @@
 //
 //  BRPaymentProtocol.c
-//
-//  Created by Aaron Voisine on 9/7/15.
-//  Copyright (c) 2015 breadwallet LLC
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to deal
-//  in the Software without restriction, including without limitation the rights
-//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//  copies of the Software, and to permit persons to whom the Software is
-//  furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-//  THE SOFTWARE.
+//  https://github.com/litecoin-foundation/litewallet-core#readme#OpenSourceLink
 
 #include "LWPaymentProtocol.h"
 #include "LWCrypto.h"
@@ -268,9 +248,9 @@ typedef enum {
     encrypted_msg_status_msg = 9
 } encrypted_msg_key;
 
-static LWTxOutput _BRPaymentProtocolOutput(uint64_t amount, uint8_t *script, size_t scriptLen)
+static LWTxOutput _LWPaymentProtocolOutput(uint64_t amount, uint8_t *script, size_t scriptLen)
 {
-    LWTxOutput out = BR_TX_OUTPUT_NONE;
+    LWTxOutput out = LW_TX_OUTPUT_NONE;
     ProtoBufContext ctx = { NULL, NULL };
     
     assert(script != NULL || scriptLen == 0);
@@ -284,9 +264,9 @@ static LWTxOutput _BRPaymentProtocolOutput(uint64_t amount, uint8_t *script, siz
     return out;
 }
 
-static LWTxOutput _BRPaymentProtocolOutputParse(const uint8_t *buf, size_t bufLen)
+static LWTxOutput _LWPaymentProtocolOutputParse(const uint8_t *buf, size_t bufLen)
 {
-    LWTxOutput out = BR_TX_OUTPUT_NONE;
+    LWTxOutput out = LW_TX_OUTPUT_NONE;
     ProtoBufContext ctx = { NULL, NULL };
     size_t off = 0;
 
@@ -308,7 +288,7 @@ static LWTxOutput _BRPaymentProtocolOutputParse(const uint8_t *buf, size_t bufLe
     }
 
     if (! out.script) { // required
-        out = BR_TX_OUTPUT_NONE;
+        out = LW_TX_OUTPUT_NONE;
         if (ctx.defaults) array_free(ctx.defaults);
         if (ctx.unknown) array_free(ctx.unknown);
     }
@@ -317,7 +297,7 @@ static LWTxOutput _BRPaymentProtocolOutputParse(const uint8_t *buf, size_t bufLe
     return out;
 }
 
-static size_t _BRPaymentProtocolOutputSerialize(LWTxOutput out, uint8_t *buf, size_t bufLen)
+static size_t _LWPaymentProtocolOutputSerialize(LWTxOutput out, uint8_t *buf, size_t bufLen)
 {
     ProtoBufContext ctx;
     size_t off = 0;
@@ -336,7 +316,7 @@ static size_t _BRPaymentProtocolOutputSerialize(LWTxOutput out, uint8_t *buf, si
     return (! buf || off <= bufLen) ? off : 0;
 }
 
-static void _BRPaymentProtocolOutputFree(LWTxOutput out)
+static void _LWPaymentProtocolOutputFree(LWTxOutput out)
 {
     ProtoBufContext ctx;
 
@@ -372,7 +352,7 @@ LWPaymentProtocolDetails *LWPaymentProtocolDetailsNew(const char *network, const
     array_new(details->outputs, outCount);
     
     for (size_t i = 0; i < outCount; i++) {
-        array_add(details->outputs, _BRPaymentProtocolOutput(outputs[i].amount, outputs[i].script, outputs[i].scriptLen));
+        array_add(details->outputs, _LWPaymentProtocolOutput(outputs[i].amount, outputs[i].script, outputs[i].scriptLen));
     }
     
     details->time = time;
@@ -401,14 +381,14 @@ LWPaymentProtocolDetails *LWPaymentProtocolDetailsParse(const uint8_t *buf, size
     array_new(details->outputs, 1);
 
     while (buf && off < bufLen) {
-        LWTxOutput out = BR_TX_OUTPUT_NONE;
+        LWTxOutput out = LW_TX_OUTPUT_NONE;
         const uint8_t *data = NULL;
         size_t dLen = bufLen;
         uint64_t i = 0, key = _ProtoBufField(&i, &data, buf, &dLen, &off);
 
         switch (key >> 3) {
             case details_network: _ProtoBufString(&details->network, data, dLen); break;
-            case details_outputs: out = _BRPaymentProtocolOutputParse(data, dLen); break;
+            case details_outputs: out = _LWPaymentProtocolOutputParse(data, dLen); break;
             case details_time: details->time = i, ctx->defaults[details_time] = 0; break;
             case details_expires: details->expires = i, ctx->defaults[details_expires] = 0; break;
             case details_memo: _ProtoBufString(&details->memo, data, dLen); break;
@@ -443,10 +423,10 @@ size_t LWPaymentProtocolDetailsSerialize(const LWPaymentProtocolDetails *details
     if (! ctx->defaults[details_network]) _ProtoBufSetString(buf, bufLen, details->network, details_network, &off);
     
     for (i = 0; i < details->outCount; i++) {
-        l = _BRPaymentProtocolOutputSerialize(details->outputs[i], NULL, 0);
+        l = _LWPaymentProtocolOutputSerialize(details->outputs[i], NULL, 0);
         if (l > outLen) outBuf = realloc(outBuf, (outLen = l));
         assert(outBuf != NULL);
-        l = _BRPaymentProtocolOutputSerialize(details->outputs[i], outBuf, outLen);
+        l = _LWPaymentProtocolOutputSerialize(details->outputs[i], outBuf, outLen);
         _ProtoBufSetBytes(buf, bufLen, outBuf, l, details_outputs, &off);
     }
 
@@ -474,7 +454,7 @@ void LWPaymentProtocolDetailsFree(LWPaymentProtocolDetails *details)
     assert(details != NULL);
     
     if (details->network) array_free(details->network);
-    for (size_t i = 0; i < details->outCount; i++) _BRPaymentProtocolOutputFree(details->outputs[i]);
+    for (size_t i = 0; i < details->outCount; i++) _LWPaymentProtocolOutputFree(details->outputs[i]);
     if (details->outputs) array_free(details->outputs);
     if (details->memo) array_free(details->memo);
     if (details->paymentURL) array_free(details->paymentURL);
@@ -704,7 +684,7 @@ LWPaymentProtocolPayment *LWPaymentProtocolPaymentNew(const uint8_t *merchantDat
         uint8_t script[LWAddressScriptPubKey(NULL, 0, refundToAddresses[i].s)];
         size_t scriptLen = LWAddressScriptPubKey(script, sizeof(script), refundToAddresses[i].s);
             
-        array_add(payment->refundTo, _BRPaymentProtocolOutput(refundToAmounts[i], script, scriptLen));
+        array_add(payment->refundTo, _LWPaymentProtocolOutput(refundToAmounts[i], script, scriptLen));
     }
     
     payment->refundToCount = refundToCount;
@@ -730,14 +710,14 @@ LWPaymentProtocolPayment *LWPaymentProtocolPaymentParse(const uint8_t *buf, size
     
     while (buf && off < bufLen) {
         LWTransaction *tx = NULL;
-        LWTxOutput out = BR_TX_OUTPUT_NONE;
+        LWTxOutput out = LW_TX_OUTPUT_NONE;
         const uint8_t *data = NULL;
         size_t dLen = bufLen;
         uint64_t i = 0, key = _ProtoBufField(&i, &data, buf, &dLen, &off);
         
         switch (key >> 3) {
             case payment_transactions: tx = LWTransactionParse(data, dLen); break;
-            case payment_refund_to: out = _BRPaymentProtocolOutputParse(data, dLen); break;
+            case payment_refund_to: out = _LWPaymentProtocolOutputParse(data, dLen); break;
             case payment_memo: _ProtoBufString(&payment->memo, data, dLen); break;
             case payment_merch_data: payment->merchDataLen = _ProtoBufBytes(&payment->merchantData, data, dLen); break;
             default: _ProtoBufUnknown(&ctx->unknown, key, i, data, dLen); break;
@@ -775,10 +755,10 @@ size_t LWPaymentProtocolPaymentSerialize(const LWPaymentProtocolPayment *payment
     }
 
     for (size_t i = 0; i < payment->refundToCount; i++) {
-        l = _BRPaymentProtocolOutputSerialize(payment->refundTo[i], NULL, 0);
+        l = _LWPaymentProtocolOutputSerialize(payment->refundTo[i], NULL, 0);
         if (l > sLen) sBuf = realloc(sBuf, (sLen = l));
         assert(sBuf != NULL);
-        l = _BRPaymentProtocolOutputSerialize(payment->refundTo[i], sBuf, l);
+        l = _LWPaymentProtocolOutputSerialize(payment->refundTo[i], sBuf, l);
         _ProtoBufSetBytes(buf, bufLen, sBuf, l, payment_refund_to, &off);
     }
 
@@ -802,7 +782,7 @@ void LWPaymentProtocolPaymentFree(LWPaymentProtocolPayment *payment)
     
     if (payment->merchantData) array_free(payment->merchantData);
     if (payment->transactions) array_free(payment->transactions);
-    for (size_t i = 0; i < payment->refundToCount; i++) _BRPaymentProtocolOutputFree(payment->refundTo[i]);
+    for (size_t i = 0; i < payment->refundToCount; i++) _LWPaymentProtocolOutputFree(payment->refundTo[i]);
     if (payment->refundTo) array_free(payment->refundTo);
     if (payment->memo) array_free(payment->memo);
     if (ctx->defaults) array_free(ctx->defaults);
@@ -1189,13 +1169,13 @@ void LWPaymentProtocolMessageFree(LWPaymentProtocolMessage *msg)
     free(msg);
 }
 
-static void _BRECDH(void *out32, LWKey *privKey, LWKey *pubKey)
+static void _LWECDH(void *out32, LWKey *privKey, LWKey *pubKey)
 {
     uint8_t p[65];
     size_t pLen = LWKeyPubKey(pubKey, p, sizeof(p));
     
     if (pLen == 65) p[0] = (p[64] % 2) ? 0x03 : 0x02; // convert to compressed pubkey format
-    BRSecp256k1PointMul((LWECPoint *)p, &privKey->secret); // calculate shared secret ec-point
+    LWSecp256k1PointMul((LWECPoint *)p, &privKey->secret); // calculate shared secret ec-point
     memcpy(out32, &p[1], 32); // unpack the x coordinate
 }
 
@@ -1209,7 +1189,7 @@ static void _LWPaymentProtocolEncryptedMessageCEK(LWPaymentProtocolEncryptedMess
            rpkLen = LWKeyPubKey(&msg->receiverPubKey, rpk, sizeof(rpk));
     LWKey *pubKey = (pkLen != rpkLen || memcmp(pk, rpk, pkLen) != 0) ? &msg->receiverPubKey : &msg->senderPubKey;
 
-    _BRECDH(secret, privKey, pubKey);
+    _LWECDH(secret, privKey, pubKey);
     LWSHA512(seed, secret, sizeof(secret));
     mem_clean(secret, sizeof(secret));
     LWHMACDRBG(cek32, 32, K, V, LWSHA256, 256/8, seed, sizeof(seed), nonce, sizeof(nonce), NULL, 0);

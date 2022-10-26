@@ -1,26 +1,6 @@
 //
 //  BRCrypto.c
-//
-//  Created by Aaron Voisine on 8/8/15.
-//  Copyright (c) 2015 breadwallet LLC
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to deal
-//  in the Software without restriction, including without limitation the rights
-//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//  copies of the Software, and to permit persons to whom the Software is
-//  furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-//  THE SOFTWARE.
+//  https://github.com/litecoin-foundation/litewallet-core#readme#OpenSourceLink
 
 #include "LWCrypto.h"
 #include <stdlib.h>
@@ -312,7 +292,7 @@ void LWSHA512(void *md64, const void *data, size_t len)
 #define rmd(a, b, c, d, e, f, g, h, i, j) ((a) = rol32((f) + (b) + le32(c) + (d), (e)) + (g), (f) = (g), (g) = (h),\
                                            (h) = rol32((i), 10), (i) = (j), (j) = (a))
 
-static void _BRRMDCompress(uint32_t *r, const uint32_t *x)
+static void _LWRMDCompress(uint32_t *r, const uint32_t *x)
 {
     // left line
     static const int rl1[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, // round 1, id
@@ -370,14 +350,14 @@ void LWRMD160(void *md20, const void *data, size_t len)
     for (i = 0; i <= len; i += 64) { // process data in 64 byte blocks
         memcpy(x, (const uint8_t *)data + i, (i + 64 < len) ? 64 : len - i);
         if (i + 64 > len) break;
-        _BRRMDCompress(buf, x);
+        _LWRMDCompress(buf, x);
     }
     
     memset((uint8_t *)x + (len - i), 0, 64 - (len - i)); // clear remainder of x
     ((uint8_t *)x)[len - i] = 0x80; // append padding
-    if (len - i >= 56) _BRRMDCompress(buf, x), memset(x, 0, 64); // length goes to next block
+    if (len - i >= 56) _LWRMDCompress(buf, x), memset(x, 0, 64); // length goes to next block
     x[14] = le32((uint32_t)(len << 3)), x[15] = le32((uint32_t)(len >> 29)); // append length in bits
-    _BRRMDCompress(buf, x); // finalize
+    _LWRMDCompress(buf, x); // finalize
     for (i = 0; i < 5; i++) buf[i] = le32(buf[i]); // endian swap
     memcpy(md20, buf, 20); // write to md
     mem_clean(x, sizeof(x));
@@ -399,7 +379,7 @@ void LWHash160(void *md20, const void *data, size_t len)
 // bitwise left rotation
 #define rol64(a, b) ((a) << (b) ^ ((a) >> (64 - (b))))
 
-static void _BRSHA3Compress(uint64_t *r, const uint64_t *x, size_t blockSize)
+static void _LWSHA3Compress(uint64_t *r, const uint64_t *x, size_t blockSize)
 {
     static const uint64_t k[] = { // keccak round constants
         0x0000000000000001, 0x0000000000008082, 0x800000000000808a, 0x8000000080008000, 0x000000000000808b,
@@ -460,13 +440,13 @@ void LWSHA3_256(void *md32, const void *data, size_t len)
     for (i = 0; i <= len; i += 136) { // process data in 136 byte blocks
         memcpy(x, (const uint8_t *)data + i, (i + 136 < len) ? 136 : len - i);
         if (i + 136 > len) break;
-        _BRSHA3Compress(buf, x, 136);
+        _LWSHA3Compress(buf, x, 136);
     }
     
     memset((uint8_t *)x + (len - i), 0, 136 - (len - i)); // clear remainder of x
     ((uint8_t *)x)[len - i] |= 0x06; // append padding
     ((uint8_t *)x)[135] |= 0x80;
-    _BRSHA3Compress(buf, x, 136); // finalize
+    _LWSHA3Compress(buf, x, 136); // finalize
     for (i = 0; i < 4; i++) buf[i] = le64(buf[i]); // endian swap
     memcpy(md32, buf, 32); // write to md
     mem_clean(x, sizeof(x));
@@ -485,13 +465,13 @@ void LWKeccak256(void *md32, const void *data, size_t len)
     for (i = 0; i <= len; i += 136) { // process data in 136 byte blocks
         memcpy(x, (const uint8_t *)data + i, (i + 136 < len) ? 136 : len - i);
         if (i + 136 > len) break;
-        _BRSHA3Compress(buf, x, 136);
+        _LWSHA3Compress(buf, x, 136);
     }
     
     memset((uint8_t *)x + (len - i), 0, 136 - (len - i)); // clear remainder of x
     ((uint8_t *)x)[len - i] |= 0x01; // append padding
     ((uint8_t *)x)[135] |= 0x80;
-    _BRSHA3Compress(buf, x, 136); // finalize
+    _LWSHA3Compress(buf, x, 136); // finalize
     for (i = 0; i < 4; i++) buf[i] = le64(buf[i]); // endian swap
     memcpy(md32, buf, 32); // write to md
     mem_clean(x, sizeof(x));

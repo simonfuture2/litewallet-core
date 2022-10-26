@@ -1,26 +1,6 @@
 //
 //  LWTransaction.c
-//
-//  Created by Aaron Voisine on 8/31/15.
-//  Copyright (c) 2015 breadwallet LLC
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to deal
-//  in the Software without restriction, including without limitation the rights
-//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//  copies of the Software, and to permit persons to whom the Software is
-//  furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-//  THE SOFTWARE.
+//  https://github.com/litecoin-foundation/litewallet-core#readme#OpenSourceLink
 
 #include "LWTransaction.h"
 #include "LWKey.h"
@@ -41,7 +21,7 @@
 #define SIGHASH_FORKID       0x40 // use BIP143 digest method (for b-cash/b-gold signatures)
 
 // returns a random number less than upperBound, for non-cryptographic use only
-uint32_t BRRand(uint32_t upperBound)
+uint32_t LWRand(uint32_t upperBound)
 {
     static int first = 1;
     uint32_t r;
@@ -49,7 +29,7 @@ uint32_t BRRand(uint32_t upperBound)
     // seed = (((FNV_OFFSET xor time)*FNV_PRIME) xor pid)*FNV_PRIME
     if (first) srand((((0x811C9dc5 ^ (unsigned)time(NULL))*0x01000193) ^ (unsigned)getpid())*0x01000193);
     first = 0;
-    if (upperBound == 0 || upperBound > BR_RAND_MAX) upperBound = BR_RAND_MAX;
+    if (upperBound == 0 || upperBound > LW_RAND_MAX) upperBound = LW_RAND_MAX;
     
     do { // to avoid modulo bias, find a rand value not less than 0x100000000 % upperBound
         r = rand();
@@ -477,7 +457,7 @@ void LWTransactionShuffleOutputs(LWTransaction *tx)
     assert(tx != NULL);
     
     for (uint32_t i = 0; tx && i + 1 < tx->outCount; i++) { // fischer-yates shuffle
-        uint32_t j = i + BRRand((uint32_t)tx->outCount - i);
+        uint32_t j = i + LWRand((uint32_t)tx->outCount - i);
         LWTxOutput t;
         
         if (j != i) {

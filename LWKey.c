@@ -1,26 +1,7 @@
 //
 //  LWKey.c
-//
-//  Created by Aaron Voisine on 8/19/15.
-//  Copyright (c) 2015 breadwallet LLC
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to deal
-//  in the Software without restriction, including without limitation the rights
-//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//  copies of the Software, and to permit persons to whom the Software is
-//  furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-//  THE SOFTWARE.
+//  https://github.com/litecoin-foundation/litewallet-core#readme#OpenSourceLink
+
 
 #include "LWKey.h"
 #include "LWAddress.h"
@@ -30,8 +11,8 @@
 #include <assert.h>
 #include <pthread.h>
 
-#define BITCOIN_PRIVKEY      176
-#define BITCOIN_PRIVKEY_TEST 239
+#define LITECOIN_PRIVKEY      176
+#define LITECOIN_PRIVKEY_TEST 239
 
 #if __BIG_ENDIAN__ || (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) ||\
     __ARMEB__ || __THUMBEB__ || __AARCH64EB__ || __MIPSEB__
@@ -72,7 +53,7 @@ int LWSecp256k1ModAdd(UInt256 *a, const UInt256 *b)
 
 // multiplies 256bit big endian ints a and b (mod secp256k1 order) and stores the result in a
 // returns true on success
-int BRSecp256k1ModMul(UInt256 *a, const UInt256 *b)
+int LWSecp256k1ModMul(UInt256 *a, const UInt256 *b)
 {
     pthread_once(&_ctx_once, _ctx_init);
     return secp256k1_ec_privkey_tweak_mul(_ctx, (unsigned char *)a, (const unsigned char *)b);
@@ -105,7 +86,7 @@ int LWSecp256k1PointAdd(LWECPoint *p, const UInt256 *i)
 
 // multiplies secp256k1 ec-point p by 256bit big endian int i and stores the result in p
 // returns true on success
-int BRSecp256k1PointMul(LWECPoint *p, const UInt256 *i)
+int LWSecp256k1PointMul(LWECPoint *p, const UInt256 *i)
 {
     secp256k1_pubkey pubkey;
     size_t pLen = sizeof(*p);
@@ -131,9 +112,9 @@ int LWPrivKeyIsValid(const char *privKey)
     
     if (dataLen == 33 || dataLen == 34) { // wallet import format: https://en.bitcoin.it/wiki/Wallet_import_format
 #if LITECOIN_TESTNET
-        r = (data[0] == BITCOIN_PRIVKEY_TEST);
+        r = (data[0] == LITECOIN_PRIVKEY_TEST);
 #else
-        r = (data[0] == BITCOIN_PRIVKEY);
+        r = (data[0] == LITECOIN_PRIVKEY);
 #endif
     }
     else if ((strLen == 30 || strLen == 22) && privKey[0] == 'S') { // mini private key format
@@ -169,11 +150,11 @@ int LWKeySetSecret(LWKey *key, const UInt256 *secret, int compressed)
 int LWKeySetPrivKey(LWKey *key, const char *privKey)
 {
     size_t len = strlen(privKey);
-    uint8_t data[34], version = BITCOIN_PRIVKEY;
+    uint8_t data[34], version = LITECOIN_PRIVKEY;
     int r = 0;
     
 #if LITECOIN_TESTNET
-    version = BITCOIN_PRIVKEY_TEST;
+    version = LITECOIN_PRIVKEY_TEST;
 #endif
 
     assert(key != NULL);
@@ -232,9 +213,9 @@ size_t LWKeyPrivKey(const LWKey *key, char *privKey, size_t pkLen)
     assert(key != NULL);
     
     if (secp256k1_ec_seckey_verify(_ctx, key->secret.u8)) {
-        data[0] = BITCOIN_PRIVKEY;
+        data[0] = LITECOIN_PRIVKEY;
 #if LITECOIN_TESTNET
-        data[0] = BITCOIN_PRIVKEY_TEST;
+        data[0] = LITECOIN_PRIVKEY_TEST;
 #endif
         
         UInt256Set(&data[1], key->secret);

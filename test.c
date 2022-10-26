@@ -1,26 +1,6 @@
 //
 //  test.c
-//
-//  Created by Aaron Voisine on 8/14/15.
-//  Copyright (c) 2015 breadwallet LLC
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to deal
-//  in the Software without restriction, including without limitation the rights
-//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//  copies of the Software, and to permit persons to whom the Software is
-//  furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-//  THE SOFTWARE.
+//  https://github.com/litecoin-foundation/litewallet-core#readme#OpenSourceLink
 
 #include "LWCrypto.h"
 #include "LWBloomFilter.h"
@@ -1250,7 +1230,7 @@ int LWKeyTests()
     size_t pkLen3 = LWKeyPubKey(&key2, pubKey3, sizeof(pubKey3));
 
     if (pkLen3 != pkLen || memcmp(pubKey, pubKey3, pkLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPubKeyRecover() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s:  LWPubKeyRecover() test 1\n", __func__);
 
     pkLen = LWBase58Decode(pubKey, sizeof(pubKey), "26wZYDdvpmCrYZeUcxgqd1KquN4o6wXwLomBW5SjnwUqG");
     msg = "i am a test signed string do de dah";
@@ -1263,7 +1243,7 @@ int LWKeyTests()
     size_t pkLen4 = LWKeyPubKey(&key2, pubKey4, sizeof(pubKey4));
     
     if (pkLen4 != pkLen || memcmp(pubKey, pubKey4, pkLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPubKeyRecover() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s:  LWPubKeyRecover() test 2\n", __func__);
 
     pkLen = LWBase58Decode(pubKey, sizeof(pubKey), "gpRv1sNA3XURB6QEtGrx6Q18DZ5cSgUSDQKX4yYypxpW");
     msg = "i am a test signed string";
@@ -1276,7 +1256,7 @@ int LWKeyTests()
     size_t pkLen5 = LWKeyPubKey(&key2, pubKey5, sizeof(pubKey5));
     
     if (pkLen5 != pkLen || memcmp(pubKey, pubKey5, pkLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPubKeyRecover() test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s:  LWPubKeyRecover() test 3\n", __func__);
 
     printf("                                    ");
     return r;
