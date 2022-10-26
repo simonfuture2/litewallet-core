@@ -118,7 +118,7 @@ int BRSecp256k1PointMul(LWECPoint *p, const UInt256 *i)
 
 // returns true if privKey is a valid private key
 // supported formats are wallet import format (WIF), mini private key format, or hex string
-int BRPrivKeyIsValid(const char *privKey)
+int LWPrivKeyIsValid(const char *privKey)
 {
     uint8_t data[34];
     size_t dataLen, strLen;
@@ -181,7 +181,7 @@ int LWKeySetPrivKey(LWKey *key, const char *privKey)
     
     // mini private key format
     if ((len == 30 || len == 22) && privKey[0] == 'S') {
-        if (! BRPrivKeyIsValid(privKey)) return 0;
+        if (! LWPrivKeyIsValid(privKey)) return 0;
         LWSHA256(data, privKey, strlen(privKey));
         r = LWKeySetSecret(key, (UInt256 *)data, 0);
     }

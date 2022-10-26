@@ -59,7 +59,7 @@ int BRSecp256k1PointMul(LWECPoint *p, const UInt256 *i);
 
 // returns true if privKey is a valid private key
 // supported formats are wallet import format (WIF), mini private key format, or hex string
-int BRPrivKeyIsValid(const char *privKey);
+int LWPrivKeyIsValid(const char *privKey);
 
 typedef struct {
     UInt256 secret;

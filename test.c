@@ -61,12 +61,12 @@
 #endif
 
 #if LITECOIN_TESTNET
-#define BR_CHAIN_PARAMS LWTestNetParams
+#define LW_CHAIN_PARAMS LWTestNetParams
 #else
-#define BR_CHAIN_PARAMS LWMainNetParams
+#define LW_CHAIN_PARAMS LWMainNetParams
 #endif
 
-int BRIntsTests()
+int LWIntsTests()
 {
     // test endianess
     
@@ -114,7 +114,7 @@ int BRIntsTests()
     return r;
 }
 
-int BRArrayTests()
+int LWArrayTests()
 {
     int r = 1;
     int *a = NULL, b[] = { 1, 2, 3 }, c[] = { 3, 2 };
@@ -165,14 +165,7 @@ int BRArrayTests()
     printf("                                    ");
     return r;
 }
-
-//inline static int compare_int(void *info, const void *a, const void *b)
-//{
-//    if (*(int *)a < *(int *)b) return -1;
-//    if (*(int *)a > *(int *)b) return 1;
-//    return 0;
-//}
-
+ 
 inline static size_t hash_int(const void *i)
 {
     return (size_t)((0x811C9dc5 ^ *(const unsigned *)i)*0x01000193); // (FNV_OFFSET xor i)*FNV_PRIME
@@ -217,7 +210,7 @@ int LWSetTests()
     return r;
 }
 
-int BRBase58Tests()
+int LWBase58Tests()
 {
     int r = 1;
     char *s;
@@ -321,7 +314,7 @@ int BRBase58Tests()
     return r;
 }
 
-int BRBech32Tests()
+int LWBech32Tests()
 {
     int r = 1;
     uint8_t b[52];
@@ -355,7 +348,7 @@ int BRBech32Tests()
     return r;
 }
 
-int BRHashTests()
+int LWHashTests()
 {
     // test sha1
     
@@ -583,7 +576,7 @@ int BRHashTests()
     return r;
 }
 
-int BRMacTests()
+int LWMacTests()
 {
     int r = 1;
 
@@ -738,7 +731,7 @@ int BRMacTests()
     return r;
 }
 
-int BRDrbgTests()
+int LWDrbgTests()
 {
     int r = 1;
     const char seed1[] = "\xa7\x6e\x77\xa9\x69\xab\x92\x64\x51\x81\xf0\x15\x78\x02\x52\x37\x46\xc3\x4b\xf3\x21\x86\x76"
@@ -878,7 +871,7 @@ int BRDrbgTests()
     return r;
 }
 
-int BRCypherTests()
+int LWCypherTests()
 {
     int r = 1;
     const char key[] = "\0\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16"
@@ -971,7 +964,7 @@ int BRCypherTests()
     return r;
 }
 
-int BRAuthEncryptTests()
+int LWAuthEncryptTests()
 {
     int r = 1;
     const char msg1[] = "Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, "
@@ -1039,12 +1032,12 @@ int LWKeyTests()
     uint8_t sig[72], pubKey[65];
     size_t sigLen, pkLen;
 
-    if (BRPrivKeyIsValid("S6c56bnXQiBjk9mqSYE7ykVQ7NzrRz"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPrivKeyIsValid() test 0\n", __func__);
+    if (LWPrivKeyIsValid("S6c56bnXQiBjk9mqSYE7ykVQ7NzrRz"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPrivKeyIsValid() test 0\n", __func__);
 
     // mini private key format
-    if (! BRPrivKeyIsValid("S6c56bnXQiBjk9mqSYE7ykVQ7NzrRy"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPrivKeyIsValid() test 1\n", __func__);
+    if (! LWPrivKeyIsValid("S6c56bnXQiBjk9mqSYE7ykVQ7NzrRy"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPrivKeyIsValid() test 1\n", __func__);
 
     printf("\n");
     LWKeySetPrivKey(&key, "S6c56bnXQiBjk9mqSYE7ykVQ7NzrRy");
@@ -1059,8 +1052,8 @@ int LWKeyTests()
 #endif
 
     // old mini private key format
-    if (! BRPrivKeyIsValid("SzavMBLoXU6kDrqtUVmffv"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPrivKeyIsValid() test 2\n", __func__);
+    if (! LWPrivKeyIsValid("SzavMBLoXU6kDrqtUVmffv"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPrivKeyIsValid() test 2\n", __func__);
 
     LWKeySetPrivKey(&key, "SzavMBLoXU6kDrqtUVmffv");
     LWKeyAddress(&key, addr.s, sizeof(addr));
@@ -1075,8 +1068,8 @@ int LWKeyTests()
 
 #if ! LITECOIN_TESTNET
     // uncompressed private key
-    if (! BRPrivKeyIsValid("5Kb8kLf9zgWQnogidDA76MzPL6TsZZY36hWXMssSzNydYXYB9KF"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPrivKeyIsValid() test 3\n", __func__);
+    if (! LWPrivKeyIsValid("5Kb8kLf9zgWQnogidDA76MzPL6TsZZY36hWXMssSzNydYXYB9KF"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPrivKeyIsValid() test 3\n", __func__);
     
     LWKeySetPrivKey(&key, "5Kb8kLf9zgWQnogidDA76MzPL6TsZZY36hWXMssSzNydYXYB9KF");
     LWKeyAddress(&key, addr.s, sizeof(addr));
@@ -1093,8 +1086,8 @@ int LWKeyTests()
         r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyPrivKey() test 1\n", __func__);
     
     // compressed private key
-    if (! BRPrivKeyIsValid("KyvGbxRUoofdw3TNydWn2Z78dBHSy2odn1d3wXWN2o3SAtccFNJL"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPrivKeyIsValid() test 4\n", __func__);
+    if (! LWPrivKeyIsValid("KyvGbxRUoofdw3TNydWn2Z78dBHSy2odn1d3wXWN2o3SAtccFNJL"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPrivKeyIsValid() test 4\n", __func__);
     
     LWKeySetPrivKey(&key, "KyvGbxRUoofdw3TNydWn2Z78dBHSy2odn1d3wXWN2o3SAtccFNJL");
     LWKeyAddress(&key, addr.s, sizeof(addr));
@@ -1289,7 +1282,7 @@ int LWKeyTests()
     return r;
 }
 
-int BRBIP38KeyTests()
+int LWBIP38KeyTests()
 {
     int r = 1;
     LWKey key;
@@ -1377,15 +1370,6 @@ int BRBIP38KeyTests()
         r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetBIP38Key() test 8\n", __func__);
 
     printf("privKey:%s\n", privKey);
-    
-//    // password NFC unicode normalization test
-//    if (! LWKeySetBIP38Key(&key, "6PRW5o9FLp4gJDDVqJQKJFTpMvdsSGJxMYHtHaQBF3ooa8mwD69bapcDQn",
-//                           "\u03D2\u0301\0\U00010400\U0001F4A9") ||
-//        ! LWKeyPrivKey(&key, privKey, sizeof(privKey)) ||
-//        strncmp(privKey, "5Jajm8eQ22H3pGWLEVCXyvND8dQZhiQhoLJNKjYXk9roUFTMSZ4", sizeof(privKey)) != 0)
-//        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetBIP38Key() test 9\n", __func__);
-//
-//    printf("privKey:%s\n", privKey);
 
     // incorrect password test
     if (LWKeySetBIP38Key(&key, "6PRW5o9FLp4gJDDVqJQKJFTpMvdsSGJxMYHtHaQBF3ooa8mwD69bapcDQn", "foobar"))
@@ -1430,7 +1414,7 @@ int LWAddressTests()
     return r;
 }
 
-int BRBIP39MnemonicTests()
+int LWBIP39MnemonicTests()
 {
     int r = 1;
     
@@ -1576,7 +1560,7 @@ int BRBIP39MnemonicTests()
     return r;
 }
 
-int BRBIP32SequenceTests()
+int LWBIP32SequenceTests()
 {
     int r = 1;
 
@@ -1814,28 +1798,28 @@ static void walletTxDeleted(void *info, UInt256 txHash, int notifyUser, int reco
 // TODO: test tx ordering for multiple tx with same block height
 // TODO: port all applicable tests from bitcoinj and bitcoincore
 
-int BRWalletTests()
+int LWWalletTests()
 {
     int r = 1;
     LWMasterPubKey mpk = LWBIP32MasterPubKey("", 1);
-    BRWallet *w = BRWalletNew(NULL, 0, mpk);
+    LWWallet *w = LWWalletNew(NULL, 0, mpk);
     UInt256 secret = uint256("0000000000000000000000000000000000000000000000000000000000000001"),
             inHash = uint256("0000000000000000000000000000000000000000000000000000000000000001");
     LWKey k;
-    LWAddress addr, recvAddr = BRWalletReceiveAddress(w);
+    LWAddress addr, recvAddr = LWWalletReceiveAddress(w);
     LWTransaction *tx;
     
     printf("\n");
     
-    BRWalletSetCallbacks(w, w, walletBalanceChanged, walletTxAdded, walletTxUpdated, walletTxDeleted);
+    LWWalletSetCallbacks(w, w, walletBalanceChanged, walletTxAdded, walletTxUpdated, walletTxDeleted);
     LWKeySetSecret(&k, &secret, 1);
     LWKeyAddress(&k, addr.s, sizeof(addr));
     
-    tx = BRWalletCreateTransaction(w, 1, addr.s);
-    if (tx) r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletCreateTransaction() test 0\n", __func__);
+    tx = LWWalletCreateTransaction(w, 1, addr.s);
+    if (tx) r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletCreateTransaction() test 0\n", __func__);
     
-    tx = BRWalletCreateTransaction(w, SATOSHIS, addr.s);
-    if (tx) r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletCreateTransaction() test 1\n", __func__);
+    tx = LWWalletCreateTransaction(w, SATOSHIS, addr.s);
+    if (tx) r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletCreateTransaction() test 1\n", __func__);
     
     uint8_t inScript[LWAddressScriptPubKey(NULL, 0, addr.s)];
     size_t inScriptLen = LWAddressScriptPubKey(inScript, sizeof(inScript), addr.s);
@@ -1845,24 +1829,24 @@ int BRWalletTests()
     tx = LWTransactionNew();
     LWTransactionAddInput(tx, inHash, 0, 1, inScript, inScriptLen, NULL, 0, TXIN_SEQUENCE);
     LWTransactionAddOutput(tx, SATOSHIS, outScript, outScriptLen);
-//    BRWalletRegisterTransaction(w, tx); // test adding unsigned tx
-//    if (BRWalletBalance(w) != 0)
-//        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletRegisterTransaction() test 1\n", __func__);
+//    LWWalletRegisterTransaction(w, tx); // test adding unsigned tx
+//    if (LWWalletBalance(w) != 0)
+//        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletRegisterTransaction() test 1\n", __func__);
 
-    if (BRWalletTransactions(w, NULL, 0) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactions() test 1\n", __func__);
+    if (LWWalletTransactions(w, NULL, 0) != 0)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactions() test 1\n", __func__);
 
     LWTransactionSign(tx, 0, &k, 1);
-    BRWalletRegisterTransaction(w, tx);
-    if (BRWalletBalance(w) != SATOSHIS)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletRegisterTransaction() test 2\n", __func__);
+    LWWalletRegisterTransaction(w, tx);
+    if (LWWalletBalance(w) != SATOSHIS)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletRegisterTransaction() test 2\n", __func__);
 
-    if (BRWalletTransactions(w, NULL, 0) != 1)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactions() test 2\n", __func__);
+    if (LWWalletTransactions(w, NULL, 0) != 1)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactions() test 2\n", __func__);
 
-    BRWalletRegisterTransaction(w, tx); // test adding same tx twice
-    if (BRWalletBalance(w) != SATOSHIS)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletRegisterTransaction() test 3\n", __func__);
+    LWWalletRegisterTransaction(w, tx); // test adding same tx twice
+    if (LWWalletBalance(w) != SATOSHIS)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletRegisterTransaction() test 3\n", __func__);
 
     tx = LWTransactionNew();
     LWTransactionAddInput(tx, inHash, 1, 1, inScript, inScriptLen, NULL, 0, TXIN_SEQUENCE - 1);
@@ -1870,76 +1854,76 @@ int BRWalletTests()
     tx->lockTime = 1000;
     LWTransactionSign(tx, 0, &k, 1);
 
-    if (! BRWalletTransactionIsPending(w, tx))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactionIsPending() test\n", __func__);
+    if (! LWWalletTransactionIsPending(w, tx))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactionIsPending() test\n", __func__);
 
-    BRWalletRegisterTransaction(w, tx); // test adding tx with future lockTime
-    if (BRWalletBalance(w) != SATOSHIS)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletRegisterTransaction() test 4\n", __func__);
+    LWWalletRegisterTransaction(w, tx); // test adding tx with future lockTime
+    if (LWWalletBalance(w) != SATOSHIS)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletRegisterTransaction() test 4\n", __func__);
 
-    BRWalletUpdateTransactions(w, &tx->txHash, 1, 1000, 1);
-    if (BRWalletBalance(w) != SATOSHIS*2)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletUpdateTransactions() test\n", __func__);
+    LWWalletUpdateTransactions(w, &tx->txHash, 1, 1000, 1);
+    if (LWWalletBalance(w) != SATOSHIS*2)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletUpdateTransactions() test\n", __func__);
 
-    BRWalletFree(w);
+    LWWalletFree(w);
     tx = LWTransactionNew();
     LWTransactionAddInput(tx, inHash, 0, 1, inScript, inScriptLen, NULL, 0, TXIN_SEQUENCE);
     LWTransactionAddOutput(tx, SATOSHIS, outScript, outScriptLen);
     LWTransactionSign(tx, 0, &k, 1);
     tx->timestamp = 1;
-    w = BRWalletNew(&tx, 1, mpk);
-    if (BRWalletBalance(w) != SATOSHIS)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletNew() test\n", __func__);
+    w = LWWalletNew(&tx, 1, mpk);
+    if (LWWalletBalance(w) != SATOSHIS)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletNew() test\n", __func__);
 
-    if (BRWalletAllAddrs(w, NULL, 0) != SEQUENCE_GAP_LIMIT_EXTERNAL + SEQUENCE_GAP_LIMIT_INTERNAL + 1)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletAllAddrs() test\n", __func__);
+    if (LWWalletAllAddrs(w, NULL, 0) != SEQUENCE_GAP_LIMIT_EXTERNAL + SEQUENCE_GAP_LIMIT_INTERNAL + 1)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletAllAddrs() test\n", __func__);
     
     UInt256 hash = tx->txHash;
 
-    tx = BRWalletCreateTransaction(w, SATOSHIS*2, addr.s);
-    if (tx) r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletCreateTransaction() test 3\n", __func__);
+    tx = LWWalletCreateTransaction(w, SATOSHIS*2, addr.s);
+    if (tx) r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletCreateTransaction() test 3\n", __func__);
 
-    if (BRWalletFeeForTxAmount(w, SATOSHIS/2) < 1000)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletFeeForTxAmount() test 1\n", __func__);
+    if (LWWalletFeeForTxAmount(w, SATOSHIS/2) < 1000)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletFeeForTxAmount() test 1\n", __func__);
     
-    tx = BRWalletCreateTransaction(w, SATOSHIS/2, addr.s);
-    if (! tx) r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletCreateTransaction() test 4\n", __func__);
+    tx = LWWalletCreateTransaction(w, SATOSHIS/2, addr.s);
+    if (! tx) r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletCreateTransaction() test 4\n", __func__);
 
-    if (tx) BRWalletSignTransaction(w, tx, 0, "", 1);
+    if (tx) LWWalletSignTransaction(w, tx, 0, "", 1);
     if (tx && ! LWTransactionIsSigned(tx))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletSignTransaction() test\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletSignTransaction() test\n", __func__);
     
-    if (tx) tx->timestamp = 1, BRWalletRegisterTransaction(w, tx);
-    if (tx && BRWalletBalance(w) + BRWalletFeeForTx(w, tx) != SATOSHIS/2)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletRegisterTransaction() test 5\n", __func__);
+    if (tx) tx->timestamp = 1, LWWalletRegisterTransaction(w, tx);
+    if (tx && LWWalletBalance(w) + LWWalletFeeForTx(w, tx) != SATOSHIS/2)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletRegisterTransaction() test 5\n", __func__);
     
-    if (BRWalletTransactions(w, NULL, 0) != 2)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactions() test 3\n", __func__);
+    if (LWWalletTransactions(w, NULL, 0) != 2)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactions() test 3\n", __func__);
     
-    if (tx && BRWalletTransactionForHash(w, tx->txHash) != tx)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactionForHash() test\n", __func__);
+    if (tx && LWWalletTransactionForHash(w, tx->txHash) != tx)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactionForHash() test\n", __func__);
 
-    if (tx && ! BRWalletTransactionIsValid(w, tx))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactionIsValid() test\n", __func__);
+    if (tx && ! LWWalletTransactionIsValid(w, tx))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactionIsValid() test\n", __func__);
 
-    if (tx && ! BRWalletTransactionIsVerified(w, tx))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactionIsVerified() test\n", __func__);
+    if (tx && ! LWWalletTransactionIsVerified(w, tx))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactionIsVerified() test\n", __func__);
 
-    if (tx && BRWalletTransactionIsPending(w, tx))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactionIsPending() test 2\n", __func__);
+    if (tx && LWWalletTransactionIsPending(w, tx))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactionIsPending() test 2\n", __func__);
     
-    BRWalletRemoveTransaction(w, hash); // removing first tx should recursively remove second, leaving none
-    if (BRWalletTransactions(w, NULL, 0) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletRemoveTransaction() test\n", __func__);
+    LWWalletRemoveTransaction(w, hash); // removing first tx should recursively remove second, leaving none
+    if (LWWalletTransactions(w, NULL, 0) != 0)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletRemoveTransaction() test\n", __func__);
 
-    if (! LWAddressEq(BRWalletReceiveAddress(w).s, recvAddr.s)) // verify used addresses are correctly tracked
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletReceiveAddress() test\n", __func__);
+    if (! LWAddressEq(LWWalletReceiveAddress(w).s, recvAddr.s)) // verify used addresses are correctly tracked
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletReceiveAddress() test\n", __func__);
     
-    if (BRWalletFeeForTxAmount(w, SATOSHIS) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletFeeForTxAmount() test 2\n", __func__);
+    if (LWWalletFeeForTxAmount(w, SATOSHIS) != 0)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletFeeForTxAmount() test 2\n", __func__);
     
     printf("                                    ");
-    BRWalletFree(w);
+    LWWalletFree(w);
 
     int64_t amt;
     
@@ -1947,29 +1931,29 @@ int BRWalletTests()
     LWTransactionAddInput(tx, inHash, 0, 1, inScript, inScriptLen, NULL, 0, TXIN_SEQUENCE);
     LWTransactionAddOutput(tx, 740000, outScript, outScriptLen);
     LWTransactionSign(tx, 0, &k, 1);
-    w = BRWalletNew(&tx, 1, mpk);
-    BRWalletSetCallbacks(w, w, walletBalanceChanged, walletTxAdded, walletTxUpdated, walletTxDeleted);
-    BRWalletSetFeePerKb(w, 65000);
-    amt = BRWalletMaxOutputAmount(w);
-    tx = BRWalletCreateTransaction(w, amt, addr.s);
+    w = LWWalletNew(&tx, 1, mpk);
+    LWWalletSetCallbacks(w, w, walletBalanceChanged, walletTxAdded, walletTxUpdated, walletTxDeleted);
+    LWWalletSetFeePerKb(w, 65000);
+    amt = LWWalletMaxOutputAmount(w);
+    tx = LWWalletCreateTransaction(w, amt, addr.s);
     
-    if (BRWalletAmountSentByTx(w, tx) - BRWalletFeeForTx(w, tx) != amt || BRWalletAmountReceivedFromTx(w, tx) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletMaxOutputAmount() test 1\n", __func__);
+    if (LWWalletAmountSentByTx(w, tx) - LWWalletFeeForTx(w, tx) != amt || LWWalletAmountReceivedFromTx(w, tx) != 0)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletMaxOutputAmount() test 1\n", __func__);
 
     LWTransactionFree(tx);
-    BRWalletFree(w);
+    LWWalletFree(w);
     
-    amt = BRBitcoinAmount(50000, 50000);
-    if (amt != SATOSHIS) r = 0, fprintf(stderr, "***FAILED*** %s: BRBitcoinAmount() test 1\n", __func__);
+    amt = LWBitcoinAmount(50000, 50000);
+    if (amt != SATOSHIS) r = 0, fprintf(stderr, "***FAILED*** %s: LWBitcoinAmount() test 1\n", __func__);
 
-    amt = BRBitcoinAmount(-50000, 50000);
-    if (amt != -SATOSHIS) r = 0, fprintf(stderr, "***FAILED*** %s: BRBitcoinAmount() test 2\n", __func__);
+    amt = LWBitcoinAmount(-50000, 50000);
+    if (amt != -SATOSHIS) r = 0, fprintf(stderr, "***FAILED*** %s: LWBitcoinAmount() test 2\n", __func__);
     
-    amt = BRLocalAmount(SATOSHIS, 50000);
-    if (amt != 50000) r = 0, fprintf(stderr, "***FAILED*** %s: BRLocalAmount() test 1\n", __func__);
+    amt = LWLocalAmount(SATOSHIS, 50000);
+    if (amt != 50000) r = 0, fprintf(stderr, "***FAILED*** %s: LWLocalAmount() test 1\n", __func__);
 
-    amt = BRLocalAmount(-SATOSHIS, 50000);
-    if (amt != -50000) r = 0, fprintf(stderr, "***FAILED*** %s: BRLocalAmount() test 2\n", __func__);
+    amt = LWLocalAmount(-SATOSHIS, 50000);
+    if (amt != -50000) r = 0, fprintf(stderr, "***FAILED*** %s: LWLocalAmount() test 2\n", __func__);
     
     return r;
 }
@@ -2143,7 +2127,7 @@ int LWMerkleBlockTests()
     return r;
 }
 
-int BRPaymentProtocolTests()
+int LWPaymentProtocolTests()
 {
     int r = 1;
     const char buf1[] = "\x08\x01\x12\x0b\x78\x35\x30\x39\x2b\x73\x68\x61\x32\x35\x36\x1a\xb8\x1d\x0a\xc9\x0b\x30\x82"
@@ -2499,7 +2483,7 @@ int BRPaymentProtocolTests()
     return r;
 }
 
-int BRPaymentProtocolEncryptionTests()
+int LWPaymentProtocolEncryptionTests()
 {
     int r = 1;
     LWKey senderKey, receiverKey;
@@ -2579,15 +2563,15 @@ int BRPaymentProtocolEncryptionTests()
     return r;
 }
 
-void BRPeerAcceptMessageTest(BRPeer *peer, const uint8_t *msg, size_t len, const char *type);
+void LWPeerAcceptMessageTest(LWPeer *peer, const uint8_t *msg, size_t len, const char *type);
 
-int BRPeerTests()
+int LWPeerTests()
 {
     int r = 1;
-    BRPeer *p = BRPeerNew(BR_CHAIN_PARAMS.magicNumber);
+    LWPeer *p = LWPeerNew(LW_CHAIN_PARAMS.magicNumber);
     const char msg[] = "my message";
     
-    BRPeerAcceptMessageTest(p, (const uint8_t *)msg, sizeof(msg) - 1, "inv");
+    LWPeerAcceptMessageTest(p, (const uint8_t *)msg, sizeof(msg) - 1, "inv");
     return r;
 }
 
@@ -2595,52 +2579,52 @@ int LWRunTests()
 {
     int fail = 0;
     
-    printf("BRIntsTests...                      ");
-    printf("%s\n", (BRIntsTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRArrayTests...                     ");
-    printf("%s\n", (BRArrayTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWIntsTests...                      ");
+    printf("%s\n", (LWIntsTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWArrayTests...                     ");
+    printf("%s\n", (LWArrayTests()) ? "success" : (fail++, "***FAIL***"));
     printf("LWSetTests...                       ");
     printf("%s\n", (LWSetTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRBase58Tests...                    ");
-    printf("%s\n", (BRBase58Tests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRBech32Tests...                    ");
-    printf("%s\n", (BRBech32Tests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRHashTests...                      ");
-    printf("%s\n", (BRHashTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRMacTests...                       ");
-    printf("%s\n", (BRMacTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRDrbgTests...                      ");
-    printf("%s\n", (BRDrbgTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRCypherTests...                    ");
-    printf("%s\n", (BRCypherTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRAuthEncryptTests...               ");
-    printf("%s\n", (BRAuthEncryptTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWBase58Tests...                    ");
+    printf("%s\n", (LWBase58Tests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWBech32Tests...                    ");
+    printf("%s\n", (LWBech32Tests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWHashTests...                      ");
+    printf("%s\n", (LWHashTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWMacTests...                       ");
+    printf("%s\n", (LWMacTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWDrbgTests...                      ");
+    printf("%s\n", (LWDrbgTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWCypherTests...                    ");
+    printf("%s\n", (LWCypherTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWAuthEncryptTests...               ");
+    printf("%s\n", (LWAuthEncryptTests()) ? "success" : (fail++, "***FAIL***"));
     printf("LWKeyTests...                       ");
     printf("%s\n", (LWKeyTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRBIP38KeyTests...                  ");
+    printf("LWBIP38KeyTests...                  ");
 #if SKIP_BIP38
     printf("SKIPPED\n");
 #else
-    printf("%s\n", (BRBIP38KeyTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("%s\n", (LWBIP38KeyTests()) ? "success" : (fail++, "***FAIL***"));
 #endif
     printf("LWAddressTests...                   ");
     printf("%s\n", (LWAddressTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRBIP39MnemonicTests...             ");
-    printf("%s\n", (BRBIP39MnemonicTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRBIP32SequenceTests...             ");
-    printf("%s\n", (BRBIP32SequenceTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWBIP39MnemonicTests...             ");
+    printf("%s\n", (LWBIP39MnemonicTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWBIP32SequenceTests...             ");
+    printf("%s\n", (LWBIP32SequenceTests()) ? "success" : (fail++, "***FAIL***"));
     printf("LWTransactionTests...               ");
     printf("%s\n", (LWTransactionTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRWalletTests...                    ");
-    printf("%s\n", (BRWalletTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWWalletTests...                    ");
+    printf("%s\n", (LWWalletTests()) ? "success" : (fail++, "***FAIL***"));
     printf("LWBloomFilterTests...               ");
     printf("%s\n", (LWBloomFilterTests()) ? "success" : (fail++, "***FAIL***"));
     printf("LWMerkleBlockTests...               ");
     printf("%s\n", (LWMerkleBlockTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRPaymentProtocolTests...           ");
-    printf("%s\n", (BRPaymentProtocolTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRPaymentProtocolEncryptionTests... ");
-    printf("%s\n", (BRPaymentProtocolEncryptionTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWPaymentProtocolTests...           ");
+    printf("%s\n", (LWPaymentProtocolTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWPaymentProtocolEncryptionTests... ");
+    printf("%s\n", (LWPaymentProtocolEncryptionTests()) ? "success" : (fail++, "***FAIL***"));
     printf("\n");
     
     if (fail > 0) printf("%d TEST FUNCTION(S) ***FAILED***\n", fail);
@@ -2649,7 +2633,7 @@ int LWRunTests()
     return (fail == 0);
 }
 
-#ifndef BITCOIN_TEST_NO_MAIN
+#ifndef LITECOIN_TEST_NO_MAIN
 void syncStarted(void *info)
 {
     printf("sync started\n");
@@ -2672,27 +2656,27 @@ int main(int argc, const char *argv[])
 //    int err = 0;
 //    UInt512 seed = UINT512_ZERO;
 //    LWMasterPubKey mpk = LW_MASTER_PUBKEY_NONE;
-//    BRWallet *wallet;
-//    BRPeerManager *manager;
+//    LWWallet *wallet;
+//    LWPeerManager *manager;
 //
 //    //LWBIP39DeriveKey(seed.u8, "video tiger report bid suspect taxi mail argue naive layer metal surface", NULL);
 //    LWBIP39DeriveKey(seed.u8, "axis husband project any sea patch drip tip spirit tide bring belt", NULL);
 //    mpk = LWBIP32MasterPubKey(&seed, sizeof(seed));
 //
-//    wallet = BRWalletNew(NULL, 0, mpk);
-//    BRWalletSetCallbacks(wallet, wallet, walletBalanceChanged, walletTxAdded, walletTxUpdated, walletTxDeleted);
-//    printf("wallet created with first receive address: %s\n", BRWalletReceiveAddress(wallet).s);
+//    wallet = LWWalletNew(NULL, 0, mpk);
+//    LWWalletSetCallbacks(wallet, wallet, walletBalanceChanged, walletTxAdded, walletTxUpdated, walletTxDeleted);
+//    printf("wallet created with first receive address: %s\n", LWWalletReceiveAddress(wallet).s);
 //
-//    manager = BRPeerManagerNew(&LWMainNetParams, wallet, BIP39_CREATION_TIME, NULL, 0, NULL, 0);
-//    BRPeerManagerSetCallbacks(manager, manager, syncStarted, syncStopped, txStatusUpdate, NULL, NULL, NULL, NULL);
+//    manager = LWPeerManagerNew(&LWMainNetParams, wallet, BIP39_CREATION_TIME, NULL, 0, NULL, 0);
+//    LWPeerManagerSetCallbacks(manager, manager, syncStarted, syncStopped, txStatusUpdate, NULL, NULL, NULL, NULL);
 //
-//    BRPeerManagerConnect(manager);
-//    while (err == 0 && BRPeerManagerPeerCount(manager) > 0) err = sleep(1);
+//    LWPeerManagerConnect(manager);
+//    while (err == 0 && LWPeerManagerPeerCount(manager) > 0) err = sleep(1);
 //    if (err != 0) printf("sleep got a signal\n");
 //
-//    BRPeerManagerDisconnect(manager);
-//    BRPeerManagerFree(manager);
-//    BRWalletFree(wallet);
+//    LWPeerManagerDisconnect(manager);
+//    LWPeerManagerFree(manager);
+//    LWWalletFree(wallet);
 //    sleep(5);
     
     return (r) ? 0 : 1;

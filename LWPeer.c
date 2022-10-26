@@ -1,5 +1,5 @@
 //
-//  BRPeer.c
+//  LWPeer.c
 //
 //  Created by Aaron Voisine on 9/2/15.
 //  Copyright (c) 2015 breadwallet LLC.
@@ -89,10 +89,10 @@ typedef enum {
 } inv_type;
 
 typedef struct {
-    BRPeer peer; // superstruct on top of BRPeer
+    LWPeer peer; // superstruct on top of LWPeer
     uint32_t magicNumber;
     char host[INET6_ADDRSTRLEN];
-    BRPeerStatus status;
+    LWPeerStatus status;
     int waitingForNetwork;
     volatile int needsFilterUpdate;
     uint64_t nonce, feePerKb;
@@ -109,7 +109,7 @@ typedef struct {
     void *info;
     void (*connected)(void *info);
     void (*disconnected)(void *info, int error);
-    void (*relayedPeers)(void *info, const BRPeer peers[], size_t peersCount);
+    void (*relayedPeers)(void *info, const LWPeer peers[], size_t peersCount);
     void (*relayedTx)(void *info, LWTransaction *tx);
     void (*hasTx)(void *info, UInt256 txHash);
     void (*rejectedTx)(void *info, UInt256 txHash, uint8_t code);
@@ -125,20 +125,20 @@ typedef struct {
     void *volatile mempoolInfo;
     void (*volatile mempoolCallback)(void *info, int success);
     pthread_t thread;
-} BRPeerContext;
+} LWPeerContext;
 
-void BRPeerSendVersionMessage(BRPeer *peer);
-void BRPeerSendVerackMessage(BRPeer *peer);
-void BRPeerSendAddr(BRPeer *peer);
+void LWPeerSendVersionMessage(LWPeer *peer);
+void LWPeerSendVerackMessage(LWPeer *peer);
+void LWPeerSendAddr(LWPeer *peer);
 
-inline static int _BRPeerIsIPv4(const BRPeer *peer)
+inline static int _LWPeerIsIPv4(const LWPeer *peer)
 {
     return (peer->address.u64[0] == 0 && peer->address.u16[4] == 0 && peer->address.u16[5] == 0xffff);
 }
 
-static void _BRPeerAddKnownTxHashes(const BRPeer *peer, const UInt256 txHashes[], size_t txCount)
+static void _LWPeerAddKnownTxHashes(const LWPeer *peer, const UInt256 txHashes[], size_t txCount)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     UInt256 *knownTxHashes = ctx->knownTxHashes;
     size_t i, j;
     
@@ -156,22 +156,22 @@ static void _BRPeerAddKnownTxHashes(const BRPeer *peer, const UInt256 txHashes[]
     }
 }
 
-static void _BRPeerDidConnect(BRPeer *peer)
+static void _LWPeerDidConnect(LWPeer *peer)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     
-    if (ctx->status == BRPeerStatusConnecting && ctx->sentVerack && ctx->gotVerack) {
+    if (ctx->status == LWPeerStatusConnecting && ctx->sentVerack && ctx->gotVerack) {
         peer_log(peer, "handshake completed");
         ctx->disconnectTime = DBL_MAX;
-        ctx->status = BRPeerStatusConnected;
+        ctx->status = LWPeerStatusConnected;
         peer_log(peer, "connected with lastblock: %"PRIu32, ctx->lastblock);
         if (ctx->connected) ctx->connected(ctx->info);
     }
 }
 
-static int _BRPeerAcceptVersionMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptVersionMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     size_t off = 0, strLen = 0, len = 0;
     uint64_t recvServices, fromServices, nonce;
     UInt128 recvAddr, fromAddr;
@@ -224,16 +224,16 @@ static int _BRPeerAcceptVersionMessage(BRPeer *peer, const uint8_t *msg, size_t 
             off += sizeof(uint32_t);
             peer_log(peer, "got version %"PRIu32", services %"PRIx64", useragent:\"%s\"", ctx->version, peer->services,
                      ctx->useragent);
-            BRPeerSendVerackMessage(peer);
+            LWPeerSendVerackMessage(peer);
         }
     }
     
     return r;
 }
 
-static int _BRPeerAcceptVerackMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptVerackMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     struct timeval tv;
     int r = 1;
     
@@ -246,16 +246,16 @@ static int _BRPeerAcceptVerackMessage(BRPeer *peer, const uint8_t *msg, size_t m
         ctx->startTime = 0;
         peer_log(peer, "got verack in %fs", ctx->pingTime);
         ctx->gotVerack = 1;
-        _BRPeerDidConnect(peer);
+        _LWPeerDidConnect(peer);
     }
     
     return r;
 }
 
 // TODO: relay addresses
-static int _BRPeerAcceptAddrMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptAddrMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     size_t off = 0, count = (size_t)LWVarInt(msg, msgLen, &off);
     int r = 1;
     
@@ -268,7 +268,7 @@ static int _BRPeerAcceptAddrMessage(BRPeer *peer, const uint8_t *msg, size_t msg
         peer_log(peer, "dropping addr message, %zu is too many addresses, max is 1000", count);
     }
     else if (ctx->sentGetaddr) { // simple anti-tarpitting tactic, don't accept unsolicited addresses
-        BRPeer peers[count], p;
+        LWPeer peers[count], p;
         size_t peersCount = 0;
         time_t now = time(NULL);
         
@@ -285,7 +285,7 @@ static int _BRPeerAcceptAddrMessage(BRPeer *peer, const uint8_t *msg, size_t msg
             off += sizeof(uint16_t);
 
             if (! (p.services & SERVICES_NODE_NETWORK)) continue; // skip peers that don't carry full blocks
-            if (! _BRPeerIsIPv4(&p)) continue; // ignore IPv6 for now
+            if (! _LWPeerIsIPv4(&p)) continue; // ignore IPv6 for now
         
             // if address time is more than 10 min in the future or unknown, set to 5 days old
             if (p.timestamp > now + 10*60 || p.timestamp == 0) p.timestamp = now - 5*24*60*60;
@@ -299,9 +299,9 @@ static int _BRPeerAcceptAddrMessage(BRPeer *peer, const uint8_t *msg, size_t msg
     return r;
 }
 
-static int _BRPeerAcceptInvMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptInvMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     size_t off = 0, count = (size_t)LWVarInt(msg, msgLen, &off);
     int r = 1;
     
@@ -373,19 +373,19 @@ static int _BRPeerAcceptInvMessage(BRPeer *peer, const uint8_t *msg, size_t msgL
                 else txHashes[j++] = hash;
             }
             
-            _BRPeerAddKnownTxHashes(peer, txHashes, j);
-            if (j > 0 || blockCount > 0) BRPeerSendGetdata(peer, txHashes, j, blockHashes, blockCount);
+            _LWPeerAddKnownTxHashes(peer, txHashes, j);
+            if (j > 0 || blockCount > 0) LWPeerSendGetdata(peer, txHashes, j, blockHashes, blockCount);
     
             // to improve chain download performance, if we received 500 block hashes, request the next 500 block hashes
             if (blockCount >= 500) {
                 UInt256 locators[] = { blockHashes[blockCount - 1], blockHashes[0] };
             
-                BRPeerSendGetblocks(peer, locators, 2, UINT256_ZERO);
+                LWPeerSendGetblocks(peer, locators, 2, UINT256_ZERO);
             }
             
             if (txCount > 0 && ctx->mempoolCallback) {
                 peer_log(peer, "got initial mempool response");
-                BRPeerSendPing(peer, ctx->mempoolInfo, ctx->mempoolCallback);
+                LWPeerSendPing(peer, ctx->mempoolInfo, ctx->mempoolCallback);
                 ctx->mempoolCallback = NULL;
                 ctx->mempoolTime = DBL_MAX;
             }
@@ -395,9 +395,9 @@ static int _BRPeerAcceptInvMessage(BRPeer *peer, const uint8_t *msg, size_t msgL
     return r;
 }
 
-static int _BRPeerAcceptTxMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptTxMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     LWTransaction *tx = LWTransactionParse(msg, msgLen);
     UInt256 txHash;
     int r = 1;
@@ -439,9 +439,9 @@ static int _BRPeerAcceptTxMessage(BRPeer *peer, const uint8_t *msg, size_t msgLe
     return r;
 }
 
-static int _BRPeerAcceptHeadersMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptHeadersMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     size_t off = 0, count = (size_t)LWVarInt(msg, msgLen, &off);
     int r = 1;
 
@@ -474,9 +474,9 @@ static int _BRPeerAcceptHeadersMessage(BRPeer *peer, const uint8_t *msg, size_t 
                 }
                 
                 LWSHA256_2(&locators[0], &msg[off + 81*(last - 1)], 80);
-                BRPeerSendGetblocks(peer, locators, 2, UINT256_ZERO);
+                LWPeerSendGetblocks(peer, locators, 2, UINT256_ZERO);
             }
-            else BRPeerSendGetheaders(peer, locators, 2, UINT256_ZERO);
+            else LWPeerSendGetheaders(peer, locators, 2, UINT256_ZERO);
 
             for (size_t i = 0; r && i < count; i++) {
                 LWMerkleBlock *block = LWMerkleBlockParse(&msg[off + 81*i], 81);
@@ -501,16 +501,16 @@ static int _BRPeerAcceptHeadersMessage(BRPeer *peer, const uint8_t *msg, size_t 
     return r;
 }
 
-static int _BRPeerAcceptGetaddrMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptGetaddrMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
     peer_log(peer, "got getaddr");
-    BRPeerSendAddr(peer);
+    LWPeerSendAddr(peer);
     return 1;
 }
 
-static int _BRPeerAcceptGetdataMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptGetdataMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     size_t off = 0, count = (size_t)LWVarInt(msg, msgLen, &off);
     int r = 1;
     
@@ -546,7 +546,7 @@ static int _BRPeerAcceptGetdataMessage(BRPeer *peer, const uint8_t *msg, size_t 
                         }
                         
                         peer_log(peer, "publishing tx: %s", txHex);
-                        BRPeerSendMessage(peer, buf, bufLen, MSG_TX);
+                        LWPeerSendMessage(peer, buf, bufLen, MSG_TX);
                         break;
                     }
                     
@@ -569,7 +569,7 @@ static int _BRPeerAcceptGetdataMessage(BRPeer *peer, const uint8_t *msg, size_t 
             memcpy(&buf[o], notfound, 36*array_count(notfound));
             o += 36*array_count(notfound);
             array_free(notfound);
-            BRPeerSendMessage(peer, buf, o, MSG_NOTFOUND);
+            LWPeerSendMessage(peer, buf, o, MSG_NOTFOUND);
             free(buf);
         }
     }
@@ -577,9 +577,9 @@ static int _BRPeerAcceptGetdataMessage(BRPeer *peer, const uint8_t *msg, size_t 
     return r;
 }
 
-static int _BRPeerAcceptNotfoundMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptNotfoundMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     size_t off = 0, count = (size_t)LWVarInt(msg, msgLen, &off);
     int r = 1;
 
@@ -624,7 +624,7 @@ static int _BRPeerAcceptNotfoundMessage(BRPeer *peer, const uint8_t *msg, size_t
     return r;
 }
 
-static int _BRPeerAcceptPingMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptPingMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
     int r = 1;
     
@@ -634,15 +634,15 @@ static int _BRPeerAcceptPingMessage(BRPeer *peer, const uint8_t *msg, size_t msg
     }
     else {
         peer_log(peer, "got ping");
-        BRPeerSendMessage(peer, msg, msgLen, MSG_PONG);
+        LWPeerSendMessage(peer, msg, msgLen, MSG_PONG);
     }
 
     return r;
 }
 
-static int _BRPeerAcceptPongMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptPongMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     struct timeval tv;
     double pingTime;
     int r = 1;
@@ -684,12 +684,12 @@ static int _BRPeerAcceptPongMessage(BRPeer *peer, const uint8_t *msg, size_t msg
     return r;
 }
 
-static int _BRPeerAcceptMerkleblockMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptMerkleblockMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
     // Bitcoin nodes don't support querying arbitrary transactions, only transactions not yet accepted in a block. After
     // a merkleblock message, the remote node is expected to send tx messages for the tx referenced in the block. When a
     // non-tx message is received we should have all the tx in the merkleblock.
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     LWMerkleBlock *block = LWMerkleBlockParse(msg, msgLen);
     int r = 1;
   
@@ -739,9 +739,9 @@ static int _BRPeerAcceptMerkleblockMessage(BRPeer *peer, const uint8_t *msg, siz
 }
 
 // described in BIP61: https://github.com/bitcoin/bips/blob/master/bip-0061.mediawiki
-static int _BRPeerAcceptRejectMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptRejectMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     size_t off = 0, strLen = (size_t)LWVarInt(msg, msgLen, &off);
     int r = 1;
     
@@ -789,9 +789,9 @@ static int _BRPeerAcceptRejectMessage(BRPeer *peer, const uint8_t *msg, size_t m
 }
 
 // BIP133: https://github.com/bitcoin/bips/blob/master/bip-0133.mediawiki
-static int _BRPeerAcceptFeeFilterMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen)
+static int _LWPeerAcceptFeeFilterMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     int r = 1;
     
     if (sizeof(uint64_t) > msgLen) {
@@ -807,9 +807,9 @@ static int _BRPeerAcceptFeeFilterMessage(BRPeer *peer, const uint8_t *msg, size_
     return r;
 }
 
-static int _BRPeerAcceptMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen, const char *type)
+static int _LWPeerAcceptMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen, const char *type)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     int r = 1;
     
     if (ctx->currentBlock && strncmp(MSG_TX, type, 12) != 0) { // if we receive a non-tx message, merkleblock is done
@@ -819,28 +819,28 @@ static int _BRPeerAcceptMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen,
         ctx->currentBlock = NULL;
         r = 0;
     }
-    else if (strncmp(MSG_VERSION, type, 12) == 0) r = _BRPeerAcceptVersionMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_VERACK, type, 12) == 0) r = _BRPeerAcceptVerackMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_ADDR, type, 12) == 0) r = _BRPeerAcceptAddrMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_INV, type, 12) == 0) r = _BRPeerAcceptInvMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_TX, type, 12) == 0) r = _BRPeerAcceptTxMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_HEADERS, type, 12) == 0) r = _BRPeerAcceptHeadersMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_GETADDR, type, 12) == 0) r = _BRPeerAcceptGetaddrMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_GETDATA, type, 12) == 0) r = _BRPeerAcceptGetdataMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_NOTFOUND, type, 12) == 0) r = _BRPeerAcceptNotfoundMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_PING, type, 12) == 0) r = _BRPeerAcceptPingMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_PONG, type, 12) == 0) r = _BRPeerAcceptPongMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_MERKLEBLOCK, type, 12) == 0) r = _BRPeerAcceptMerkleblockMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_REJECT, type, 12) == 0) r = _BRPeerAcceptRejectMessage(peer, msg, msgLen);
-    else if (strncmp(MSG_FEEFILTER, type, 12) == 0) r = _BRPeerAcceptFeeFilterMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_VERSION, type, 12) == 0) r = _LWPeerAcceptVersionMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_VERACK, type, 12) == 0) r = _LWPeerAcceptVerackMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_ADDR, type, 12) == 0) r = _LWPeerAcceptAddrMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_INV, type, 12) == 0) r = _LWPeerAcceptInvMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_TX, type, 12) == 0) r = _LWPeerAcceptTxMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_HEADERS, type, 12) == 0) r = _LWPeerAcceptHeadersMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_GETADDR, type, 12) == 0) r = _LWPeerAcceptGetaddrMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_GETDATA, type, 12) == 0) r = _LWPeerAcceptGetdataMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_NOTFOUND, type, 12) == 0) r = _LWPeerAcceptNotfoundMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_PING, type, 12) == 0) r = _LWPeerAcceptPingMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_PONG, type, 12) == 0) r = _LWPeerAcceptPongMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_MERKLEBLOCK, type, 12) == 0) r = _LWPeerAcceptMerkleblockMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_REJECT, type, 12) == 0) r = _LWPeerAcceptRejectMessage(peer, msg, msgLen);
+    else if (strncmp(MSG_FEEFILTER, type, 12) == 0) r = _LWPeerAcceptFeeFilterMessage(peer, msg, msgLen);
     else peer_log(peer, "dropping %s, length %zu, not implemented", type, msgLen);
 
     return r;
 }
 
-static int _BRPeerOpenSocket(BRPeer *peer, int domain, double timeout, int *error)
+static int _LWPeerOpenSocket(LWPeer *peer, int domain, double timeout, int *error)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     struct sockaddr_storage addr;
     struct timeval tv;
     fd_set fds;
@@ -900,8 +900,8 @@ static int _BRPeerOpenSocket(BRPeer *peer, int domain, double timeout, int *erro
                 r = 0;
             }
         }
-        else if (err && domain == PF_INET6 && _BRPeerIsIPv4(peer)) {
-            return _BRPeerOpenSocket(peer, PF_INET, timeout, error); // fallback to IPv4
+        else if (err && domain == PF_INET6 && _LWPeerIsIPv4(peer)) {
+            return _LWPeerOpenSocket(peer, PF_INET, timeout, error); // fallback to IPv4
         }
         else if (err) r = 0;
 
@@ -916,13 +916,13 @@ static int _BRPeerOpenSocket(BRPeer *peer, int domain, double timeout, int *erro
 
 static void *_peerThreadRoutine(void *arg)
 {
-    BRPeer *peer = arg;
-    BRPeerContext *ctx = arg;
+    LWPeer *peer = arg;
+    LWPeerContext *ctx = arg;
     int socket, error = 0;
 
     pthread_cleanup_push(ctx->threadCleanup, ctx->info);
     
-    if (_BRPeerOpenSocket(peer, PF_INET6, CONNECT_TIMEOUT, &error)) {
+    if (_LWPeerOpenSocket(peer, PF_INET6, CONNECT_TIMEOUT, &error)) {
         struct timeval tv;
         double time = 0, msgTimeout;
         uint8_t header[HEADER_LENGTH], *payload = malloc(0x1000);
@@ -932,7 +932,7 @@ static void *_peerThreadRoutine(void *arg)
         assert(payload != NULL);
         gettimeofday(&tv, NULL);
         ctx->startTime = tv.tv_sec + (double)tv.tv_usec/1000000;
-        BRPeerSendVersionMessage(peer);
+        LWPeerSendVersionMessage(peer);
         
         while (ctx->socket >= 0 && ! error) {
             len = 0;
@@ -949,7 +949,7 @@ static void *_peerThreadRoutine(void *arg)
 
                 if (! error && time >= ctx->mempoolTime) {
                     peer_log(peer, "done waiting for mempool response");
-                    BRPeerSendPing(peer, ctx->mempoolInfo, ctx->mempoolCallback);
+                    LWPeerSendPing(peer, ctx->mempoolInfo, ctx->mempoolCallback);
                     ctx->mempoolCallback = NULL;
                     ctx->mempoolTime = DBL_MAX;
                 }
@@ -1008,7 +1008,7 @@ static void *_peerThreadRoutine(void *arg)
                                      ", SHA256_2:%s", type, UInt32GetLE(&hash), checksum, msgLen, u256hex(hash));
                             error = EPROTO;
                         }
-                        else if (! _BRPeerAcceptMessage(peer, payload, msgLen, type)) error = EPROTO;
+                        else if (! _LWPeerAcceptMessage(peer, payload, msgLen, type)) error = EPROTO;
                     }
                 }
             }
@@ -1019,7 +1019,7 @@ static void *_peerThreadRoutine(void *arg)
     
     socket = ctx->socket;
     ctx->socket = -1;
-    ctx->status = BRPeerStatusDisconnected;
+    ctx->status = LWPeerStatusDisconnected;
     if (socket >= 0) close(socket);
     peer_log(peer, "disconnected");
     
@@ -1043,10 +1043,10 @@ static void _dummyThreadCleanup(void *info)
 {
 }
 
-// returns a newly allocated BRPeer struct that must be freed by calling BRPeerFree()
-BRPeer *BRPeerNew(uint32_t magicNumber)
+// returns a newly allocated LWPeer struct that must be freed by calling LWPeerFree()
+LWPeer *LWPeerNew(uint32_t magicNumber)
 {
-    BRPeerContext *ctx = calloc(1, sizeof(*ctx));
+    LWPeerContext *ctx = calloc(1, sizeof(*ctx));
     
     assert(ctx != NULL);
     ctx->magicNumber = magicNumber;
@@ -1068,7 +1068,7 @@ BRPeer *BRPeerNew(uint32_t magicNumber)
 // info is a void pointer that will be passed along with each callback call
 // void connected(void *) - called when peer handshake completes successfully
 // void disconnected(void *, int) - called when peer connection is closed, error is an errno.h code
-// void relayedPeers(void *, const BRPeer[], size_t) - called when an "addr" message is received from peer
+// void relayedPeers(void *, const LWPeer[], size_t) - called when an "addr" message is received from peer
 // void relayedTx(void *, LWTransaction *) - called when a "tx" message is received from peer
 // void hasTx(void *, UInt256 txHash) - called when an "inv" message with an already-known tx hash is received from peer
 // void rejectedTx(void *, UInt256 txHash, uint8_t) - called when a "reject" message is received from peer
@@ -1077,10 +1077,10 @@ BRPeer *BRPeerNew(uint32_t magicNumber)
 // LWTransaction *requestedTx(void *, UInt256) - called when "getdata" message with a tx hash is received from peer
 // int networkIsReachable(void *) - must return true when networking is available, false otherwise
 // void threadCleanup(void *) - called before a thread terminates to faciliate any needed cleanup
-void BRPeerSetCallbacks(BRPeer *peer, void *info,
+void LWPeerSetCallbacks(LWPeer *peer, void *info,
                         void (*connected)(void *info),
                         void (*disconnected)(void *info, int error),
-                        void (*relayedPeers)(void *info, const BRPeer peers[], size_t peersCount),
+                        void (*relayedPeers)(void *info, const LWPeer peers[], size_t peersCount),
                         void (*relayedTx)(void *info, LWTransaction *tx),
                         void (*hasTx)(void *info, UInt256 txHash),
                         void (*rejectedTx)(void *info, UInt256 txHash, uint8_t code),
@@ -1092,7 +1092,7 @@ void BRPeerSetCallbacks(BRPeer *peer, void *info,
                         int (*networkIsReachable)(void *info),
                         void (*threadCleanup)(void *info))
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     
     ctx->info = info;
     ctx->connected = connected;
@@ -1110,33 +1110,33 @@ void BRPeerSetCallbacks(BRPeer *peer, void *info,
 }
 
 // set earliestKeyTime to wallet creation time in order to speed up initial sync
-void BRPeerSetEarliestKeyTime(BRPeer *peer, uint32_t earliestKeyTime)
+void LWPeerSetEarliestKeyTime(LWPeer *peer, uint32_t earliestKeyTime)
 {
-    ((BRPeerContext *)peer)->earliestKeyTime = earliestKeyTime;
+    ((LWPeerContext *)peer)->earliestKeyTime = earliestKeyTime;
 }
 
 // call this when local block height changes (helps detect tarpit nodes)
-void BRPeerSetCurrentBlockHeight(BRPeer *peer, uint32_t currentBlockHeight)
+void LWPeerSetCurrentBlockHeight(LWPeer *peer, uint32_t currentBlockHeight)
 {
-    ((BRPeerContext *)peer)->currentBlockHeight = currentBlockHeight;
+    ((LWPeerContext *)peer)->currentBlockHeight = currentBlockHeight;
 }
 
 // current connection status
-BRPeerStatus BRPeerConnectStatus(BRPeer *peer)
+LWPeerStatus LWPeerConnectStatus(LWPeer *peer)
 {
-    return ((BRPeerContext *)peer)->status;
+    return ((LWPeerContext *)peer)->status;
 }
 
 // open connection to peer and perform handshake
-void BRPeerConnect(BRPeer *peer)
+void LWPeerConnect(LWPeer *peer)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     struct timeval tv;
     int error = 0;
     pthread_attr_t attr;
 
-    if (ctx->status == BRPeerStatusDisconnected || ctx->waitingForNetwork) {
-        ctx->status = BRPeerStatusConnecting;
+    if (ctx->status == LWPeerStatusDisconnected || ctx->waitingForNetwork) {
+        ctx->status = LWPeerStatusConnecting;
     
         if (ctx->networkIsReachable && ! ctx->networkIsReachable(ctx->info)) { // delay until network is reachable
             if (! ctx->waitingForNetwork) peer_log(peer, "waiting for network reachability");
@@ -1151,7 +1151,7 @@ void BRPeerConnect(BRPeer *peer)
             if (pthread_attr_init(&attr) != 0) {
                 error = ENOMEM;
                 peer_log(peer, "error creating thread");
-                ctx->status = BRPeerStatusDisconnected;
+                ctx->status = LWPeerStatusDisconnected;
                 //if (ctx->disconnected) ctx->disconnected(ctx->info, error);
             }
             else if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0 ||
@@ -1159,7 +1159,7 @@ void BRPeerConnect(BRPeer *peer)
                 error = EAGAIN;
                 peer_log(peer, "error creating thread");
                 pthread_attr_destroy(&attr);
-                ctx->status = BRPeerStatusDisconnected;
+                ctx->status = LWPeerStatusDisconnected;
                 //if (ctx->disconnected) ctx->disconnected(ctx->info, error);
             }
         }
@@ -1167,9 +1167,9 @@ void BRPeerConnect(BRPeer *peer)
 }
 
 // close connection to peer
-void BRPeerDisconnect(BRPeer *peer)
+void LWPeerDisconnect(LWPeer *peer)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     int socket = ctx->socket;
 
     if (socket >= 0) {
@@ -1180,9 +1180,9 @@ void BRPeerDisconnect(BRPeer *peer)
 }
 
 // call this to (re)schedule a disconnect in the given number of seconds, or < 0 to cancel (useful for sync timeout)
-void BRPeerScheduleDisconnect(BRPeer *peer, double seconds)
+void LWPeerScheduleDisconnect(LWPeer *peer, double seconds)
 {
-    BRPeerContext *ctx = ((BRPeerContext *)peer);
+    LWPeerContext *ctx = ((LWPeerContext *)peer);
     struct timeval tv;
     
     gettimeofday(&tv, NULL);
@@ -1190,18 +1190,18 @@ void BRPeerScheduleDisconnect(BRPeer *peer, double seconds)
 }
 
 // call this when wallet addresses need to be added to bloom filter
-void BRPeerSetNeedsFilterUpdate(BRPeer *peer, int needsFilterUpdate)
+void LWPeerSetNeedsFilterUpdate(LWPeer *peer, int needsFilterUpdate)
 {
-    ((BRPeerContext *)peer)->needsFilterUpdate = needsFilterUpdate;
+    ((LWPeerContext *)peer)->needsFilterUpdate = needsFilterUpdate;
 }
 
 // display name of peer address
-const char *BRPeerHost(BRPeer *peer)
+const char *LWPeerHost(LWPeer *peer)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
 
     if (ctx->host[0] == '\0') {
-        if (_BRPeerIsIPv4(peer)) {
+        if (_LWPeerIsIPv4(peer)) {
             inet_ntop(AF_INET, &peer->address.u32[3], ctx->host, sizeof(ctx->host));
         }
         else inet_ntop(AF_INET6, &peer->address, ctx->host, sizeof(ctx->host));
@@ -1211,33 +1211,33 @@ const char *BRPeerHost(BRPeer *peer)
 }
 
 // connected peer version number
-uint32_t BRPeerVersion(BRPeer *peer)
+uint32_t LWPeerVersion(LWPeer *peer)
 {
-    return ((BRPeerContext *)peer)->version;
+    return ((LWPeerContext *)peer)->version;
 }
 
 // connected peer user agent string
-const char *BRPeerUserAgent(BRPeer *peer)
+const char *LWPeerUserAgent(LWPeer *peer)
 {
-    return ((BRPeerContext *)peer)->useragent;
+    return ((LWPeerContext *)peer)->useragent;
 }
 
 // best block height reported by connected peer
-uint32_t BRPeerLastBlock(BRPeer *peer)
+uint32_t LWPeerLastBlock(LWPeer *peer)
 {
-    return ((BRPeerContext *)peer)->lastblock;
+    return ((LWPeerContext *)peer)->lastblock;
 }
 
 // average ping time for connected peer
-double BRPeerPingTime(BRPeer *peer)
+double LWPeerPingTime(LWPeer *peer)
 {
-    return ((BRPeerContext *)peer)->pingTime;
+    return ((LWPeerContext *)peer)->pingTime;
 }
 
 // minimum tx fee rate peer will accept
-uint64_t BRPeerFeePerKb(BRPeer *peer)
+uint64_t LWPeerFeePerKb(LWPeer *peer)
 {
-    return ((BRPeerContext *)peer)->feePerKb;
+    return ((LWPeerContext *)peer)->feePerKb;
 }
 
 #ifndef MSG_NOSIGNAL   // linux based systems have a MSG_NOSIGNAL send flag, useful for supressing SIGPIPE signals
@@ -1245,13 +1245,13 @@ uint64_t BRPeerFeePerKb(BRPeer *peer)
 #endif
 
 // sends a bitcoin protocol message to peer
-void BRPeerSendMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen, const char *type)
+void LWPeerSendMessage(LWPeer *peer, const uint8_t *msg, size_t msgLen, const char *type)
 {
     if (msgLen > MAX_MSG_LENGTH) {
         peer_log(peer, "failed to send %s, length %zu is too long", type, msgLen);
     }
     else {
-        BRPeerContext *ctx = (BRPeerContext *)peer;
+        LWPeerContext *ctx = (LWPeerContext *)peer;
         uint8_t buf[HEADER_LENGTH + msgLen], hash[32];
         size_t off = 0;
         ssize_t n = 0;
@@ -1284,14 +1284,14 @@ void BRPeerSendMessage(BRPeer *peer, const uint8_t *msg, size_t msgLen, const ch
         
         if (error) {
             peer_log(peer, "%s", strerror(error));
-            BRPeerDisconnect(peer);
+            LWPeerDisconnect(peer);
         }
     }
 }
 
-void BRPeerSendVersionMessage(BRPeer *peer)
+void LWPeerSendVersionMessage(LWPeer *peer)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     size_t off = 0, userAgentLen = strlen(USER_AGENT);
     uint8_t msg[80 + LWVarIntSize(userAgentLen) + userAgentLen + 5];
     
@@ -1322,42 +1322,42 @@ void BRPeerSendVersionMessage(BRPeer *peer)
     UInt32SetLE(&msg[off], 0); // last block received
     off += sizeof(uint32_t);
     msg[off++] = 0; // relay transactions (0 for SPV bloom filter mode)
-    BRPeerSendMessage(peer, msg, sizeof(msg), MSG_VERSION);
+    LWPeerSendMessage(peer, msg, sizeof(msg), MSG_VERSION);
 }
 
-void BRPeerSendVerackMessage(BRPeer *peer)
+void LWPeerSendVerackMessage(LWPeer *peer)
 {
-    BRPeerSendMessage(peer, NULL, 0, MSG_VERACK);
-    ((BRPeerContext *)peer)->sentVerack = 1;
+    LWPeerSendMessage(peer, NULL, 0, MSG_VERACK);
+    ((LWPeerContext *)peer)->sentVerack = 1;
 }
 
-void BRPeerSendAddr(BRPeer *peer)
+void LWPeerSendAddr(LWPeer *peer)
 {
     uint8_t msg[LWVarIntSize(0)];
     size_t msgLen = LWVarIntSet(msg, sizeof(msg), 0);
     
     //TODO: send peer addresses we know about
-    BRPeerSendMessage(peer, msg, msgLen, MSG_ADDR);
+    LWPeerSendMessage(peer, msg, msgLen, MSG_ADDR);
 }
 
-void BRPeerSendFilterload(BRPeer *peer, const uint8_t *filter, size_t filterLen)
+void LWPeerSendFilterload(LWPeer *peer, const uint8_t *filter, size_t filterLen)
 {
-    ((BRPeerContext *)peer)->sentFilter = 1;
-    ((BRPeerContext *)peer)->sentMempool = 0;
-    BRPeerSendMessage(peer, filter, filterLen, MSG_FILTERLOAD);
+    ((LWPeerContext *)peer)->sentFilter = 1;
+    ((LWPeerContext *)peer)->sentMempool = 0;
+    LWPeerSendMessage(peer, filter, filterLen, MSG_FILTERLOAD);
 }
 
-void BRPeerSendMempool(BRPeer *peer, const UInt256 knownTxHashes[], size_t knownTxCount, void *info,
+void LWPeerSendMempool(LWPeer *peer, const UInt256 knownTxHashes[], size_t knownTxCount, void *info,
                        void (*completionCallback)(void *info, int success))
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     struct timeval tv;
     int sentMempool = ctx->sentMempool;
     
     ctx->sentMempool = 1;
     
     if (! sentMempool && ! ctx->mempoolCallback) {
-        _BRPeerAddKnownTxHashes(peer, knownTxHashes, knownTxCount);
+        _LWPeerAddKnownTxHashes(peer, knownTxHashes, knownTxCount);
         
         if (completionCallback) {
             gettimeofday(&tv, NULL);
@@ -1366,7 +1366,7 @@ void BRPeerSendMempool(BRPeer *peer, const UInt256 knownTxHashes[], size_t known
             ctx->mempoolCallback = completionCallback;
         }
         
-        BRPeerSendMessage(peer, NULL, 0, MSG_MEMPOOL);
+        LWPeerSendMessage(peer, NULL, 0, MSG_MEMPOOL);
     }
     else {
         peer_log(peer, "mempool request already sent");
@@ -1374,7 +1374,7 @@ void BRPeerSendMempool(BRPeer *peer, const UInt256 knownTxHashes[], size_t known
     }
 }
 
-void BRPeerSendGetheaders(BRPeer *peer, const UInt256 locators[], size_t locatorsCount, UInt256 hashStop)
+void LWPeerSendGetheaders(LWPeer *peer, const UInt256 locators[], size_t locatorsCount, UInt256 hashStop)
 {
     size_t i, off = 0;
     size_t msgLen = sizeof(uint32_t) + LWVarIntSize(locatorsCount) + sizeof(*locators)*locatorsCount + sizeof(hashStop);
@@ -1395,11 +1395,11 @@ void BRPeerSendGetheaders(BRPeer *peer, const UInt256 locators[], size_t locator
     if (locatorsCount > 0) {
         peer_log(peer, "calling getheaders with %zu locators: [%s,%s %s]", locatorsCount, u256hex(locators[0]),
                  (locatorsCount > 2 ? " ...," : ""), (locatorsCount > 1 ? u256hex(locators[locatorsCount - 1]) : ""));
-        BRPeerSendMessage(peer, msg, off, MSG_GETHEADERS);
+        LWPeerSendMessage(peer, msg, off, MSG_GETHEADERS);
     }
 }
 
-void BRPeerSendGetblocks(BRPeer *peer, const UInt256 locators[], size_t locatorsCount, UInt256 hashStop)
+void LWPeerSendGetblocks(LWPeer *peer, const UInt256 locators[], size_t locatorsCount, UInt256 hashStop)
 {
     size_t i, off = 0;
     size_t msgLen = sizeof(uint32_t) + LWVarIntSize(locatorsCount) + sizeof(*locators)*locatorsCount + sizeof(hashStop);
@@ -1420,16 +1420,16 @@ void BRPeerSendGetblocks(BRPeer *peer, const UInt256 locators[], size_t locators
     if (locatorsCount > 0) {
         peer_log(peer, "calling getblocks with %zu locators: [%s,%s %s]", locatorsCount, u256hex(locators[0]),
                  (locatorsCount > 2 ? " ...," : ""), (locatorsCount > 1 ? u256hex(locators[locatorsCount - 1]) : ""));
-        BRPeerSendMessage(peer, msg, off, MSG_GETBLOCKS);
+        LWPeerSendMessage(peer, msg, off, MSG_GETBLOCKS);
     }
 }
 
-void BRPeerSendInv(BRPeer *peer, const UInt256 txHashes[], size_t txCount)
+void LWPeerSendInv(LWPeer *peer, const UInt256 txHashes[], size_t txCount)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     size_t knownCount = array_count(ctx->knownTxHashes);
 
-    _BRPeerAddKnownTxHashes(peer, txHashes, txCount);
+    _LWPeerAddKnownTxHashes(peer, txHashes, txCount);
     txCount = array_count(ctx->knownTxHashes) - knownCount;
 
     if (txCount > 0) {
@@ -1445,11 +1445,11 @@ void BRPeerSendInv(BRPeer *peer, const UInt256 txHashes[], size_t txCount)
             off += sizeof(UInt256);
         }
 
-        BRPeerSendMessage(peer, msg, off, MSG_INV);
+        LWPeerSendMessage(peer, msg, off, MSG_INV);
     }
 }
 
-void BRPeerSendGetdata(BRPeer *peer, const UInt256 txHashes[], size_t txCount, const UInt256 blockHashes[],
+void LWPeerSendGetdata(LWPeer *peer, const UInt256 txHashes[], size_t txCount, const UInt256 blockHashes[],
                        size_t blockCount)
 {
     size_t i, off = 0, count = txCount + blockCount;
@@ -1477,20 +1477,20 @@ void BRPeerSendGetdata(BRPeer *peer, const UInt256 txHashes[], size_t txCount, c
             off += sizeof(UInt256);
         }
         
-        ((BRPeerContext *)peer)->sentGetdata = 1;
-        BRPeerSendMessage(peer, msg, off, MSG_GETDATA);
+        ((LWPeerContext *)peer)->sentGetdata = 1;
+        LWPeerSendMessage(peer, msg, off, MSG_GETDATA);
     }
 }
 
-void BRPeerSendGetaddr(BRPeer *peer)
+void LWPeerSendGetaddr(LWPeer *peer)
 {
-    ((BRPeerContext *)peer)->sentGetaddr = 1;
-    BRPeerSendMessage(peer, NULL, 0, MSG_GETADDR);
+    ((LWPeerContext *)peer)->sentGetaddr = 1;
+    LWPeerSendMessage(peer, NULL, 0, MSG_GETADDR);
 }
 
-void BRPeerSendPing(BRPeer *peer, void *info, void (*pongCallback)(void *info, int success))
+void LWPeerSendPing(LWPeer *peer, void *info, void (*pongCallback)(void *info, int success))
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     uint8_t msg[sizeof(uint64_t)];
     struct timeval tv;
     
@@ -1499,13 +1499,13 @@ void BRPeerSendPing(BRPeer *peer, void *info, void (*pongCallback)(void *info, i
     array_add(ctx->pongInfo, info);
     array_add(ctx->pongCallback, pongCallback);
     UInt64SetLE(msg, ctx->nonce);
-    BRPeerSendMessage(peer, msg, sizeof(msg), MSG_PING);
+    LWPeerSendMessage(peer, msg, sizeof(msg), MSG_PING);
 }
 
 // useful to get additional tx after a bloom filter update
-void BRPeerRerequestBlocks(BRPeer *peer, UInt256 fromBlock)
+void LWPeerRerequestBlocks(LWPeer *peer, UInt256 fromBlock)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     size_t i = array_count(ctx->knownBlockHashes);
     
     while (i > 0 && ! UInt256Eq(ctx->knownBlockHashes[i - 1], fromBlock)) i--;
@@ -1513,13 +1513,13 @@ void BRPeerRerequestBlocks(BRPeer *peer, UInt256 fromBlock)
     if (i > 0) {
         array_rm_range(ctx->knownBlockHashes, 0, i - 1);
         peer_log(peer, "re-requesting %zu block(s)", array_count(ctx->knownBlockHashes));
-        BRPeerSendGetdata(peer, NULL, 0, ctx->knownBlockHashes, array_count(ctx->knownBlockHashes));
+        LWPeerSendGetdata(peer, NULL, 0, ctx->knownBlockHashes, array_count(ctx->knownBlockHashes));
     }
 }
 
-void BRPeerFree(BRPeer *peer)
+void LWPeerFree(LWPeer *peer)
 {
-    BRPeerContext *ctx = (BRPeerContext *)peer;
+    LWPeerContext *ctx = (LWPeerContext *)peer;
     
     if (ctx->useragent) array_free(ctx->useragent);
     if (ctx->currentBlockTxHashes) array_free(ctx->currentBlockTxHashes);
@@ -1531,7 +1531,7 @@ void BRPeerFree(BRPeer *peer)
     free(ctx);
 }
 
-void BRPeerAcceptMessageTest(BRPeer *peer, const uint8_t *msg, size_t msgLen, const char *type)
+void LWPeerAcceptMessageTest(LWPeer *peer, const uint8_t *msg, size_t msgLen, const char *type)
 {
-    _BRPeerAcceptMessage(peer, msg, msgLen, type);
+    _LWPeerAcceptMessage(peer, msg, msgLen, type);
 }
