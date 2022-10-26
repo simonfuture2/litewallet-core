@@ -1,0 +1,4 @@
+# Remove these Mac Image remenant
+.DS_Store
+*/.DS_Store
+
