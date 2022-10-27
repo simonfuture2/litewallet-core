@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "LWAddress.h": "c",
+        "LWBech32.h": "c"
+    }
+}

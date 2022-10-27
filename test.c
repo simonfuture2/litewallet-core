@@ -1,46 +1,26 @@
 //
 //  test.c
-//
-//  Created by Aaron Voisine on 8/14/15.
-//  Copyright (c) 2015 breadwallet LLC
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to deal
-//  in the Software without restriction, including without limitation the rights
-//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//  copies of the Software, and to permit persons to whom the Software is
-//  furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-//  THE SOFTWARE.
+//  https://github.com/litecoin-foundation/litewallet-core#readme#OpenSourceLink
 
-#include "BRCrypto.h"
-#include "BRBloomFilter.h"
-#include "BRMerkleBlock.h"
-#include "BRWallet.h"
-#include "BRKey.h"
-#include "BRBIP38Key.h"
-#include "BRAddress.h"
-#include "BRBase58.h"
-#include "BRBech32.h"
-#include "BRBIP39Mnemonic.h"
-#include "BRBIP39WordsEn.h"
-#include "BRPeer.h"
-#include "BRPeerManager.h"
-#include "BRChainParams.h"
-#include "BRPaymentProtocol.h"
-#include "BRInt.h"
-#include "BRArray.h"
-#include "BRSet.h"
-#include "BRTransaction.h"
+#include "LWCrypto.h"
+#include "LWBloomFilter.h"
+#include "LWMerkleBlock.h"
+#include "LWWallet.h"
+#include "LWKey.h"
+#include "LWBIP38Key.h"
+#include "LWAddress.h"
+#include "LWBase58.h"
+#include "LWBech32.h"
+#include "LWBIP39Mnemonic.h"
+#include "LWBIP39WordsEn.h"
+#include "LWPeer.h"
+#include "LWPeerManager.h"
+#include "LWChainParams.h"
+#include "LWPaymentProtocol.h"
+#include "LWInt.h"
+#include "LWArray.h"
+#include "LWSet.h"
+#include "LWTransaction.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,13 +40,13 @@
 #define _va_rest(first, ...) __VA_ARGS__
 #endif
 
-#if BITCOIN_TESTNET
-#define BR_CHAIN_PARAMS BRTestNetParams
+#if LITECOIN_TESTNET
+#define LW_CHAIN_PARAMS LWTestNetParams
 #else
-#define BR_CHAIN_PARAMS BRMainNetParams
+#define LW_CHAIN_PARAMS LWMainNetParams
 #endif
 
-int BRIntsTests()
+int LWIntsTests()
 {
     // test endianess
     
@@ -114,7 +94,7 @@ int BRIntsTests()
     return r;
 }
 
-int BRArrayTests()
+int LWArrayTests()
 {
     int r = 1;
     int *a = NULL, b[] = { 1, 2, 3 }, c[] = { 3, 2 };
@@ -165,14 +145,7 @@ int BRArrayTests()
     printf("                                    ");
     return r;
 }
-
-//inline static int compare_int(void *info, const void *a, const void *b)
-//{
-//    if (*(int *)a < *(int *)b) return -1;
-//    if (*(int *)a > *(int *)b) return 1;
-//    return 0;
-//}
-
+ 
 inline static size_t hash_int(const void *i)
 {
     return (size_t)((0x811C9dc5 ^ *(const unsigned *)i)*0x01000193); // (FNV_OFFSET xor i)*FNV_PRIME
@@ -183,145 +156,145 @@ inline static int eq_int(const void *a, const void *b)
     return (*(const int *)a == *(const int *)b);
 }
 
-int BRSetTests()
+int LWSetTests()
 {
     int r = 1;
     int i, x[1000];
-    BRSet *s = BRSetNew(hash_int, eq_int, 0);
+    LWSet *s = LWSetNew(hash_int, eq_int, 0);
     
     for (i = 0; i < 1000; i++) {
         x[i] = i;
-        BRSetAdd(s, &x[i]);
+        LWSetAdd(s, &x[i]);
     }
     
-    if (BRSetCount(s) != 1000) r = 0, fprintf(stderr, "***FAILED*** %s: BRSetAdd() test\n", __func__);
+    if (LWSetCount(s) != 1000) r = 0, fprintf(stderr, "***FAILED*** %s: LWSetAdd() test\n", __func__);
     
     for (i = 999; i >= 0; i--) {
-        if (*(int *)BRSetGet(s, &i) != i) r = 0, fprintf(stderr, "***FAILED*** %s: BRSetGet() test %d\n", __func__, i);
+        if (*(int *)LWSetGet(s, &i) != i) r = 0, fprintf(stderr, "***FAILED*** %s: LWSetGet() test %d\n", __func__, i);
     }
     
     for (i = 0; i < 500; i++) {
-        if (*(int *)BRSetRemove(s, &i) != i)
-            r = 0, fprintf(stderr, "***FAILED*** %s: BRSetRemove() test %d\n", __func__, i);
+        if (*(int *)LWSetRemove(s, &i) != i)
+            r = 0, fprintf(stderr, "***FAILED*** %s: LWSetRemove() test %d\n", __func__, i);
     }
 
-    if (BRSetCount(s) != 500) r = 0, fprintf(stderr, "***FAILED*** %s: BRSetCount() test 1\n", __func__);
+    if (LWSetCount(s) != 500) r = 0, fprintf(stderr, "***FAILED*** %s: LWSetCount() test 1\n", __func__);
 
     for (i = 999; i >= 500; i--) {
-        if (*(int *)BRSetRemove(s, &i) != i)
-            r = 0, fprintf(stderr, "***FAILED*** %s: BRSetRemove() test %d\n", __func__, i);
+        if (*(int *)LWSetRemove(s, &i) != i)
+            r = 0, fprintf(stderr, "***FAILED*** %s: LWSetRemove() test %d\n", __func__, i);
     }
 
-    if (BRSetCount(s) != 0) r = 0, fprintf(stderr, "***FAILED*** %s: BRSetCount() test 2\n", __func__);
+    if (LWSetCount(s) != 0) r = 0, fprintf(stderr, "***FAILED*** %s: LWSetCount() test 2\n", __func__);
     
     return r;
 }
 
-int BRBase58Tests()
+int LWBase58Tests()
 {
     int r = 1;
     char *s;
     
     s = "#&$@*^(*#!^"; // test bad input
     
-    uint8_t buf1[BRBase58Decode(NULL, 0, s)];
-    size_t len1 = BRBase58Decode(buf1, sizeof(buf1), s);
+    uint8_t buf1[LWBase58Decode(NULL, 0, s)];
+    size_t len1 = LWBase58Decode(buf1, sizeof(buf1), s);
 
-    if (len1 != 0) r = 0, fprintf(stderr, "***FAILED*** %s: BRBase58Decode() test 1\n", __func__);
+    if (len1 != 0) r = 0, fprintf(stderr, "***FAILED*** %s: LWBase58Decode() test 1\n", __func__);
 
-    uint8_t buf2[BRBase58Decode(NULL, 0, "")];
-    size_t len2 = BRBase58Decode(buf2, sizeof(buf2), "");
+    uint8_t buf2[LWBase58Decode(NULL, 0, "")];
+    size_t len2 = LWBase58Decode(buf2, sizeof(buf2), "");
     
-    if (len2 != 0) r = 0, fprintf(stderr, "***FAILED*** %s: BRBase58Decode() test 2\n", __func__);
+    if (len2 != 0) r = 0, fprintf(stderr, "***FAILED*** %s: LWBase58Decode() test 2\n", __func__);
     
     s = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
     
-    uint8_t buf3[BRBase58Decode(NULL, 0, s)];
-    size_t len3 = BRBase58Decode(buf3, sizeof(buf3), s);
-    char str3[BRBase58Encode(NULL, 0, buf3, len3)];
+    uint8_t buf3[LWBase58Decode(NULL, 0, s)];
+    size_t len3 = LWBase58Decode(buf3, sizeof(buf3), s);
+    char str3[LWBase58Encode(NULL, 0, buf3, len3)];
     
-    BRBase58Encode(str3, sizeof(str3), buf3, len3);
-    if (strcmp(str3, s) != 0) r = 0, fprintf(stderr, "***FAILED*** %s: BRBase58Decode() test 3\n", __func__);
+    LWBase58Encode(str3, sizeof(str3), buf3, len3);
+    if (strcmp(str3, s) != 0) r = 0, fprintf(stderr, "***FAILED*** %s: LWBase58Decode() test 3\n", __func__);
 
     s = "1111111111111111111111111111111111111111111111111111111111111111111";
 
-    uint8_t buf4[BRBase58Decode(NULL, 0, s)];
-    size_t len4 = BRBase58Decode(buf4, sizeof(buf4), s);
-    char str4[BRBase58Encode(NULL, 0, buf4, len4)];
+    uint8_t buf4[LWBase58Decode(NULL, 0, s)];
+    size_t len4 = LWBase58Decode(buf4, sizeof(buf4), s);
+    char str4[LWBase58Encode(NULL, 0, buf4, len4)];
     
-    BRBase58Encode(str4, sizeof(str4), buf4, len4);
-    if (strcmp(str4, s) != 0) r = 0, fprintf(stderr, "***FAILED*** %s: BRBase58Decode() test 4\n", __func__);
+    LWBase58Encode(str4, sizeof(str4), buf4, len4);
+    if (strcmp(str4, s) != 0) r = 0, fprintf(stderr, "***FAILED*** %s: LWBase58Decode() test 4\n", __func__);
 
     s = "111111111111111111111111111111111111111111111111111111111111111111z";
 
-    uint8_t buf5[BRBase58Decode(NULL, 0, s)];
-    size_t len5 = BRBase58Decode(buf5, sizeof(buf5), s);
-    char str5[BRBase58Encode(NULL, 0, buf5, len5)];
+    uint8_t buf5[LWBase58Decode(NULL, 0, s)];
+    size_t len5 = LWBase58Decode(buf5, sizeof(buf5), s);
+    char str5[LWBase58Encode(NULL, 0, buf5, len5)];
     
-    BRBase58Encode(str5, sizeof(str5), buf5, len5);
-    if (strcmp(str5, s) != 0) r = 0, fprintf(stderr, "***FAILED*** %s: BRBase58Decode() test 5\n", __func__);
+    LWBase58Encode(str5, sizeof(str5), buf5, len5);
+    if (strcmp(str5, s) != 0) r = 0, fprintf(stderr, "***FAILED*** %s: LWBase58Decode() test 5\n", __func__);
 
     s = "z";
     
-    uint8_t buf6[BRBase58Decode(NULL, 0, s)];
-    size_t len6 = BRBase58Decode(buf6, sizeof(buf6), s);
-    char str6[BRBase58Encode(NULL, 0, buf6, len6)];
+    uint8_t buf6[LWBase58Decode(NULL, 0, s)];
+    size_t len6 = LWBase58Decode(buf6, sizeof(buf6), s);
+    char str6[LWBase58Encode(NULL, 0, buf6, len6)];
     
-    BRBase58Encode(str6, sizeof(str6), buf6, len6);
-    if (strcmp(str6, s) != 0) r = 0, fprintf(stderr, "***FAILED*** %s: BRBase58Decode() test 6\n", __func__);
+    LWBase58Encode(str6, sizeof(str6), buf6, len6);
+    if (strcmp(str6, s) != 0) r = 0, fprintf(stderr, "***FAILED*** %s: LWBase58Decode() test 6\n", __func__);
 
     s = NULL;
     
-    char s1[BRBase58CheckEncode(NULL, 0, (uint8_t *)s, 0)];
-    size_t l1 = BRBase58CheckEncode(s1, sizeof(s1), (uint8_t *)s, 0);
-    uint8_t b1[BRBase58CheckDecode(NULL, 0, s1)];
+    char s1[LWBase58CheckEncode(NULL, 0, (uint8_t *)s, 0)];
+    size_t l1 = LWBase58CheckEncode(s1, sizeof(s1), (uint8_t *)s, 0);
+    uint8_t b1[LWBase58CheckDecode(NULL, 0, s1)];
     
-    l1 = BRBase58CheckDecode(b1, sizeof(b1), s1);
-    if (l1 != 0) r = 0, fprintf(stderr, "***FAILED*** %s: BRBase58CheckDecode() test 1\n", __func__);
+    l1 = LWBase58CheckDecode(b1, sizeof(b1), s1);
+    if (l1 != 0) r = 0, fprintf(stderr, "***FAILED*** %s: LWBase58CheckDecode() test 1\n", __func__);
 
     s = "";
 
-    char s2[BRBase58CheckEncode(NULL, 0, (uint8_t *)s, 0)];
-    size_t l2 = BRBase58CheckEncode(s2, sizeof(s2), (uint8_t *)s, 0);
-    uint8_t b2[BRBase58CheckDecode(NULL, 0, s2)];
+    char s2[LWBase58CheckEncode(NULL, 0, (uint8_t *)s, 0)];
+    size_t l2 = LWBase58CheckEncode(s2, sizeof(s2), (uint8_t *)s, 0);
+    uint8_t b2[LWBase58CheckDecode(NULL, 0, s2)];
     
-    l2 = BRBase58CheckDecode(b2, sizeof(b2), s2);
-    if (l2 != 0) r = 0, fprintf(stderr, "***FAILED*** %s: BRBase58CheckDecode() test 2\n", __func__);
+    l2 = LWBase58CheckDecode(b2, sizeof(b2), s2);
+    if (l2 != 0) r = 0, fprintf(stderr, "***FAILED*** %s: LWBase58CheckDecode() test 2\n", __func__);
     
     s = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
     
-    char s3[BRBase58CheckEncode(NULL, 0, (uint8_t *)s, 21)];
-    size_t l3 = BRBase58CheckEncode(s3, sizeof(s3), (uint8_t *)s, 21);
-    uint8_t b3[BRBase58CheckDecode(NULL, 0, s3)];
+    char s3[LWBase58CheckEncode(NULL, 0, (uint8_t *)s, 21)];
+    size_t l3 = LWBase58CheckEncode(s3, sizeof(s3), (uint8_t *)s, 21);
+    uint8_t b3[LWBase58CheckDecode(NULL, 0, s3)];
     
-    l3 = BRBase58CheckDecode(b3, sizeof(b3), s3);
+    l3 = LWBase58CheckDecode(b3, sizeof(b3), s3);
     if (l3 != 21 || memcmp(s, b3, l3) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBase58CheckDecode() test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBase58CheckDecode() test 3\n", __func__);
 
     s = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01";
     
-    char s4[BRBase58CheckEncode(NULL, 0, (uint8_t *)s, 21)];
-    size_t l4 = BRBase58CheckEncode(s4, sizeof(s4), (uint8_t *)s, 21);
-    uint8_t b4[BRBase58CheckDecode(NULL, 0, s4)];
+    char s4[LWBase58CheckEncode(NULL, 0, (uint8_t *)s, 21)];
+    size_t l4 = LWBase58CheckEncode(s4, sizeof(s4), (uint8_t *)s, 21);
+    uint8_t b4[LWBase58CheckDecode(NULL, 0, s4)];
     
-    l4 = BRBase58CheckDecode(b4, sizeof(b4), s4);
+    l4 = LWBase58CheckDecode(b4, sizeof(b4), s4);
     if (l4 != 21 || memcmp(s, b4, l4) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBase58CheckDecode() test 4\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBase58CheckDecode() test 4\n", __func__);
 
     s = "\x05\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
     
-    char s5[BRBase58CheckEncode(NULL, 0, (uint8_t *)s, 21)];
-    size_t l5 = BRBase58CheckEncode(s5, sizeof(s5), (uint8_t *)s, 21);
-    uint8_t b5[BRBase58CheckDecode(NULL, 0, s5)];
+    char s5[LWBase58CheckEncode(NULL, 0, (uint8_t *)s, 21)];
+    size_t l5 = LWBase58CheckEncode(s5, sizeof(s5), (uint8_t *)s, 21);
+    uint8_t b5[LWBase58CheckDecode(NULL, 0, s5)];
     
-    l5 = BRBase58CheckDecode(b5, sizeof(b5), s5);
+    l5 = LWBase58CheckDecode(b5, sizeof(b5), s5);
     if (l5 != 21 || memcmp(s, b5, l5) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBase58CheckDecode() test 5\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBase58CheckDecode() test 5\n", __func__);
 
     return r;
 }
 
-int BRBech32Tests()
+int LWBech32Tests()
 {
     int r = 1;
     uint8_t b[52];
@@ -330,32 +303,32 @@ int BRBech32Tests()
     size_t l;
     
     s = "\x00\x14\x75\x1e\x76\xe8\x19\x91\x96\xd4\x54\x94\x1c\x45\xd1\xb3\xa3\x23\xf1\x43\x3b\xd6";
-    l = BRBech32Decode(h, b, "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4");
+    l = LWBech32Decode(h, b, "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4");
     if (l != 22 || strcmp(h, "bc") || memcmp(s, b, l))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRBech32Decode() test 1", __func__);
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWBech32Decode() test 1", __func__);
     
-    l = BRBech32Decode(h, b, "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4");
+    l = LWBech32Decode(h, b, "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4");
     if (l != 22 || strcmp(h, "bc") || memcmp(s, b, l))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRBech32Decode() test 2", __func__);
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWBech32Decode() test 2", __func__);
 
-    l = BRBech32Encode(addr, "bc", b);
+    l = LWBech32Encode(addr, "bc", b);
     if (l == 0 || strcmp(addr, "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRBech32Encode() test 2", __func__);
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWBech32Encode() test 2", __func__);
 
     s = "\x52\x10\x75\x1e\x76\xe8\x19\x91\x96\xd4\x54\x94\x1c\x45\xd1\xb3\xa3\x23";
-    l = BRBech32Decode(h, b, "bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj");
+    l = LWBech32Decode(h, b, "bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj");
     if (l != 18 || strcmp(h, "bc") || memcmp(s, b, l))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRBech32Decode() test 3", __func__);
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWBech32Decode() test 3", __func__);
 
-    l = BRBech32Encode(addr, "bc", b);
+    l = LWBech32Encode(addr, "bc", b);
     if (l == 0 || strcmp(addr, "bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj"))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRBech32Encode() test 3", __func__);
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWBech32Encode() test 3", __func__);
 
     if (! r) fprintf(stderr, "\n                                    ");
     return r;
 }
 
-int BRHashTests()
+int LWHashTests()
 {
     // test sha1
     
@@ -364,210 +337,210 @@ int BRHashTests()
     char *s;
     
     s = "Free online SHA1 Calculator, type text here...";
-    BRSHA1(md, s, strlen(s));
+    LWSHA1(md, s, strlen(s));
     if (! UInt160Eq(*(UInt160 *)"\x6f\xc2\xe2\x51\x72\xcb\x15\x19\x3c\xb1\xc6\xd4\x8f\x60\x7d\x42\xc1\xd2\xa2\x15",
-                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA1() test 1\n", __func__);
+                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA1() test 1\n", __func__);
         
     s = "this is some text to test the sha1 implementation with more than 64bytes of data since it's internal digest "
         "buffer is 64bytes in size";
-    BRSHA1(md, s, strlen(s));
+    LWSHA1(md, s, strlen(s));
     if (! UInt160Eq(*(UInt160 *)"\x08\x51\x94\x65\x8a\x92\x35\xb2\x95\x1a\x83\xd1\xb8\x26\xb9\x87\xe9\x38\x5a\xa3",
-                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA1() test 2\n", __func__);
+                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA1() test 2\n", __func__);
         
     s = "123456789012345678901234567890123456789012345678901234567890";
-    BRSHA1(md, s, strlen(s));
+    LWSHA1(md, s, strlen(s));
     if (! UInt160Eq(*(UInt160 *)"\x24\x5b\xe3\x00\x91\xfd\x39\x2f\xe1\x91\xf4\xbf\xce\xc2\x2d\xcb\x30\xa0\x3a\xe6",
-                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA1() test 3\n", __func__);
+                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA1() test 3\n", __func__);
     
     // a message exactly 64bytes long (internal buffer size)
     s = "1234567890123456789012345678901234567890123456789012345678901234";
-    BRSHA1(md, s, strlen(s));
+    LWSHA1(md, s, strlen(s));
     if (! UInt160Eq(*(UInt160 *)"\xc7\x14\x90\xfc\x24\xaa\x3d\x19\xe1\x12\x82\xda\x77\x03\x2d\xd9\xcd\xb3\x31\x03",
-                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA1() test 4\n", __func__);
+                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA1() test 4\n", __func__);
     
     s = ""; // empty
-    BRSHA1(md, s, strlen(s));
+    LWSHA1(md, s, strlen(s));
     if (! UInt160Eq(*(UInt160 *)"\xda\x39\xa3\xee\x5e\x6b\x4b\x0d\x32\x55\xbf\xef\x95\x60\x18\x90\xaf\xd8\x07\x09",
-                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA1() test 5\n", __func__);
+                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA1() test 5\n", __func__);
     
     s = "a";
-    BRSHA1(md, s, strlen(s));
+    LWSHA1(md, s, strlen(s));
     if (! UInt160Eq(*(UInt160 *)"\x86\xf7\xe4\x37\xfa\xa5\xa7\xfc\xe1\x5d\x1d\xdc\xb9\xea\xea\xea\x37\x76\x67\xb8",
-                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA1() test 6\n", __func__);
+                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA1() test 6\n", __func__);
 
     // test sha256
     
     s = "Free online SHA256 Calculator, type text here...";
-    BRSHA256(md, s, strlen(s));
+    LWSHA256(md, s, strlen(s));
     if (! UInt256Eq(*(UInt256 *)"\x43\xfd\x9d\xeb\x93\xf6\xe1\x4d\x41\x82\x66\x04\x51\x4e\x3d\x78\x73\xa5\x49\xac"
                     "\x87\xae\xbe\xbf\x3d\x1c\x10\xad\x6e\xb0\x57\xd0", *(UInt256 *)md))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA256() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA256() test 1\n", __func__);
         
     s = "this is some text to test the sha256 implementation with more than 64bytes of data since it's internal "
         "digest buffer is 64bytes in size";
-    BRSHA256(md, s, strlen(s));
+    LWSHA256(md, s, strlen(s));
     if (! UInt256Eq(*(UInt256 *)"\x40\xfd\x09\x33\xdf\x2e\x77\x47\xf1\x9f\x7d\x39\xcd\x30\xe1\xcb\x89\x81\x0a\x7e"
                     "\x47\x06\x38\xa5\xf6\x23\x66\x9f\x3d\xe9\xed\xd4", *(UInt256 *)md))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA256() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA256() test 2\n", __func__);
     
     s = "123456789012345678901234567890123456789012345678901234567890";
-    BRSHA256(md, s, strlen(s));
+    LWSHA256(md, s, strlen(s));
     if (! UInt256Eq(*(UInt256 *)"\xde\xcc\x53\x8c\x07\x77\x86\x96\x6a\xc8\x63\xb5\x53\x2c\x40\x27\xb8\x58\x7f\xf4"
                     "\x0f\x6e\x31\x03\x37\x9a\xf6\x2b\x44\xea\xe4\x4d", *(UInt256 *)md))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA256() test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA256() test 3\n", __func__);
     
     // a message exactly 64bytes long (internal buffer size)
     s = "1234567890123456789012345678901234567890123456789012345678901234";
-    BRSHA256(md, s, strlen(s));
+    LWSHA256(md, s, strlen(s));
     if (! UInt256Eq(*(UInt256 *)"\x67\x64\x91\x96\x5e\xd3\xec\x50\xcb\x7a\x63\xee\x96\x31\x54\x80\xa9\x5c\x54\x42"
                     "\x6b\x0b\x72\xbc\xa8\xa0\xd4\xad\x12\x85\xad\x55", *(UInt256 *)md))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA256() test 4\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA256() test 4\n", __func__);
     
     s = ""; // empty
-    BRSHA256(md, s, strlen(s));
+    LWSHA256(md, s, strlen(s));
     if (! UInt256Eq(*(UInt256 *)"\xe3\xb0\xc4\x42\x98\xfc\x1c\x14\x9a\xfb\xf4\xc8\x99\x6f\xb9\x24\x27\xae\x41\xe4"
                     "\x64\x9b\x93\x4c\xa4\x95\x99\x1b\x78\x52\xb8\x55", *(UInt256 *)md))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA256() test 5\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA256() test 5\n", __func__);
     
     s = "a";
-    BRSHA256(md, s, strlen(s));
+    LWSHA256(md, s, strlen(s));
     if (! UInt256Eq(*(UInt256 *)"\xca\x97\x81\x12\xca\x1b\xbd\xca\xfa\xc2\x31\xb3\x9a\x23\xdc\x4d\xa7\x86\xef\xf8"
                     "\x14\x7c\x4e\x72\xb9\x80\x77\x85\xaf\xee\x48\xbb", *(UInt256 *)md))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA256() test 6\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA256() test 6\n", __func__);
 
     // test sha512
     
     s = "Free online SHA512 Calculator, type text here...";
-    BRSHA512(md, s, strlen(s));
+    LWSHA512(md, s, strlen(s));
     if (! UInt512Eq(*(UInt512 *)"\x04\xf1\x15\x41\x35\xee\xcb\xe4\x2e\x9a\xdc\x8e\x1d\x53\x2f\x9c\x60\x7a\x84\x47"
                     "\xb7\x86\x37\x7d\xb8\x44\x7d\x11\xa5\xb2\x23\x2c\xdd\x41\x9b\x86\x39\x22\x4f\x78\x7a\x51"
                     "\xd1\x10\xf7\x25\x91\xf9\x64\x51\xa1\xbb\x51\x1c\x4a\x82\x9e\xd0\xa2\xec\x89\x13\x21\xf3",
-                    *(UInt512 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA512() test 1\n", __func__);
+                    *(UInt512 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA512() test 1\n", __func__);
     
     s = "this is some text to test the sha512 implementation with more than 128bytes of data since it's internal "
         "digest buffer is 128bytes in size";
-    BRSHA512(md, s, strlen(s));
+    LWSHA512(md, s, strlen(s));
     if (! UInt512Eq(*(UInt512 *)"\x9b\xd2\xdc\x7b\x05\xfb\xbe\x99\x34\xcb\x32\x89\xb6\xe0\x6b\x8c\xa9\xfd\x7a\x55"
                     "\xe6\xde\x5d\xb7\xe1\xe4\xee\xdd\xc6\x62\x9b\x57\x53\x07\x36\x7c\xd0\x18\x3a\x44\x61\xd7"
                     "\xeb\x2d\xfc\x6a\x27\xe4\x1e\x8b\x70\xf6\x59\x8e\xbc\xc7\x71\x09\x11\xd4\xfb\x16\xa3\x90",
-                    *(UInt512 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA512() test 2\n", __func__);
+                    *(UInt512 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA512() test 2\n", __func__);
     
     s = "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567"
         "8901234567890";
-    BRSHA512(md, s, strlen(s));
+    LWSHA512(md, s, strlen(s));
     if (! UInt512Eq(*(UInt512 *)"\x0d\x9a\x7d\xf5\xb6\xa6\xad\x20\xda\x51\x9e\xff\xda\x88\x8a\x73\x44\xb6\xc0\xc7"
                     "\xad\xcc\x8e\x2d\x50\x4b\x4a\xf2\x7a\xaa\xac\xd4\xe7\x11\x1c\x71\x3f\x71\x76\x95\x39\x62"
                     "\x94\x63\xcb\x58\xc8\x61\x36\xc5\x21\xb0\x41\x4a\x3c\x0e\xdf\x7d\xc6\x34\x9c\x6e\xda\xf3",
-                    *(UInt512 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA512() test 3\n", __func__);
+                    *(UInt512 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA512() test 3\n", __func__);
     
     //exactly 128bytes (internal buf size)
     s = "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567"
         "890123456789012345678";
-    BRSHA512(md, s, strlen(s));
+    LWSHA512(md, s, strlen(s));
     if (! UInt512Eq(*(UInt512 *)"\x22\x2b\x2f\x64\xc2\x85\xe6\x69\x96\x76\x9b\x5a\x03\xef\x86\x3c\xfd\x3b\x63\xdd"
                     "\xb0\x72\x77\x88\x29\x16\x95\xe8\xfb\x84\x57\x2e\x4b\xfe\x5a\x80\x67\x4a\x41\xfd\x72\xee"
                     "\xb4\x85\x92\xc9\xc7\x9f\x44\xae\x99\x2c\x76\xed\x1b\x0d\x55\xa6\x70\xa8\x3f\xc9\x9e\xc6",
-                    *(UInt512 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA512() test 4\n", __func__);
+                    *(UInt512 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA512() test 4\n", __func__);
     
     s = ""; // empty
-    BRSHA512(md, s, strlen(s));
+    LWSHA512(md, s, strlen(s));
     if (! UInt512Eq(*(UInt512 *)"\xcf\x83\xe1\x35\x7e\xef\xb8\xbd\xf1\x54\x28\x50\xd6\x6d\x80\x07\xd6\x20\xe4\x05"
                     "\x0b\x57\x15\xdc\x83\xf4\xa9\x21\xd3\x6c\xe9\xce\x47\xd0\xd1\x3c\x5d\x85\xf2\xb0\xff\x83"
                     "\x18\xd2\x87\x7e\xec\x2f\x63\xb9\x31\xbd\x47\x41\x7a\x81\xa5\x38\x32\x7a\xf9\x27\xda\x3e",
-                    *(UInt512 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA512() test 5\n", __func__);
+                    *(UInt512 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA512() test 5\n", __func__);
     
     s = "a";
-    BRSHA512(md, s, strlen(s));
+    LWSHA512(md, s, strlen(s));
     if (! UInt512Eq(*(UInt512 *)"\x1f\x40\xfc\x92\xda\x24\x16\x94\x75\x09\x79\xee\x6c\xf5\x82\xf2\xd5\xd7\xd2\x8e"
                     "\x18\x33\x5d\xe0\x5a\xbc\x54\xd0\x56\x0e\x0f\x53\x02\x86\x0c\x65\x2b\xf0\x8d\x56\x02\x52"
                     "\xaa\x5e\x74\x21\x05\x46\xf3\x69\xfb\xbb\xce\x8c\x12\xcf\xc7\x95\x7b\x26\x52\xfe\x9a\x75",
-                    *(UInt512 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRSHA512() test 6\n", __func__);
+                    *(UInt512 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWSHA512() test 6\n", __func__);
     
     // test ripemd160
     
     s = "Free online RIPEMD160 Calculator, type text here...";
-    BRRMD160(md, s, strlen(s));
+    LWRMD160(md, s, strlen(s));
     if (! UInt160Eq(*(UInt160 *)"\x95\x01\xa5\x6f\xb8\x29\x13\x2b\x87\x48\xf0\xcc\xc4\x91\xf0\xec\xbc\x7f\x94\x5b",
-                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRRMD160() test 1\n", __func__);
+                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWRMD160() test 1\n", __func__);
     
     s = "this is some text to test the ripemd160 implementation with more than 64bytes of data since it's internal "
         "digest buffer is 64bytes in size";
-    BRRMD160(md, s, strlen(s));
+    LWRMD160(md, s, strlen(s));
     if (! UInt160Eq(*(UInt160 *)"\x44\x02\xef\xf4\x21\x57\x10\x6a\x5d\x92\xe4\xd9\x46\x18\x58\x56\xfb\xc5\x0e\x09",
-                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRRMD160() test 2\n", __func__);
+                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWRMD160() test 2\n", __func__);
     
     s = "123456789012345678901234567890123456789012345678901234567890";
-    BRRMD160(md, s, strlen(s));
+    LWRMD160(md, s, strlen(s));
     if (! UInt160Eq(*(UInt160 *)"\x00\x26\x3b\x99\x97\x14\xe7\x56\xfa\x5d\x02\x81\x4b\x84\x2a\x26\x34\xdd\x31\xac",
-                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRRMD160() test 3\n", __func__);
+                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWRMD160() test 3\n", __func__);
     
     // a message exactly 64bytes long (internal buffer size)
     s = "1234567890123456789012345678901234567890123456789012345678901234";
-    BRRMD160(md, s, strlen(s));
+    LWRMD160(md, s, strlen(s));
     if (! UInt160Eq(*(UInt160 *)"\xfa\x8c\x1a\x78\xeb\x76\x3b\xb9\x7d\x5e\xa1\x4c\xe9\x30\x3d\x1c\xe2\xf3\x34\x54",
-                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRRMD160() test 4\n", __func__);
+                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWRMD160() test 4\n", __func__);
     
     s = ""; // empty
-    BRRMD160(md, s, strlen(s));
+    LWRMD160(md, s, strlen(s));
     if (! UInt160Eq(*(UInt160 *)"\x9c\x11\x85\xa5\xc5\xe9\xfc\x54\x61\x28\x08\x97\x7e\xe8\xf5\x48\xb2\x25\x8d\x31",
-                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRRMD160() test 5\n", __func__);
+                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWRMD160() test 5\n", __func__);
     
     s = "a";
-    BRRMD160(md, s, strlen(s));
+    LWRMD160(md, s, strlen(s));
     if (! UInt160Eq(*(UInt160 *)"\x0b\xdc\x9d\x2d\x25\x6b\x3e\xe9\xda\xae\x34\x7b\xe6\xf4\xdc\x83\x5a\x46\x7f\xfe",
-                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRRMD160() test 6\n", __func__);
+                    *(UInt160 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWRMD160() test 6\n", __func__);
 
     // test md5
     
     s = "Free online MD5 Calculator, type text here...";
-    BRMD5(md, s, strlen(s));
+    LWMD5(md, s, strlen(s));
     if (! UInt128Eq(*(UInt128 *)"\x0b\x3b\x20\xea\xf1\x69\x64\x62\xf5\x0d\x1a\x3b\xbd\xd3\x0c\xef",
-                    *(UInt128 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRMD5() test 1\n", __func__);
+                    *(UInt128 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWMD5() test 1\n", __func__);
     
     s = "this is some text to test the md5 implementation with more than 64bytes of data since it's internal digest "
           "buffer is 64bytes in size";
-    BRMD5(md, s, strlen(s));
+    LWMD5(md, s, strlen(s));
     if (! UInt128Eq(*(UInt128 *)"\x56\xa1\x61\xf2\x41\x50\xc6\x2d\x78\x57\xb7\xf3\x54\x92\x7e\xbe",
-                    *(UInt128 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRMD5() test 2\n", __func__);
+                    *(UInt128 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWMD5() test 2\n", __func__);
     
     s = "123456789012345678901234567890123456789012345678901234567890";
-    BRMD5(md, s, strlen(s));
+    LWMD5(md, s, strlen(s));
     if (! UInt128Eq(*(UInt128 *)"\xc5\xb5\x49\x37\x7c\x82\x6c\xc3\x71\x24\x18\xb0\x64\xfc\x41\x7e",
-                    *(UInt128 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRMD5() test 3\n", __func__);
+                    *(UInt128 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWMD5() test 3\n", __func__);
     
     // a message exactly 64bytes long (internal buffer size)
     s = "1234567890123456789012345678901234567890123456789012345678901234";
-    BRMD5(md, s, strlen(s));
+    LWMD5(md, s, strlen(s));
     if (! UInt128Eq(*(UInt128 *)"\xeb\x6c\x41\x79\xc0\xa7\xc8\x2c\xc2\x82\x8c\x1e\x63\x38\xe1\x65",
-                    *(UInt128 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRMD5() test 4\n", __func__);
+                    *(UInt128 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWMD5() test 4\n", __func__);
     
     s = ""; // empty
-    BRMD5(md, s, strlen(s));
+    LWMD5(md, s, strlen(s));
     if (! UInt128Eq(*(UInt128 *)"\xd4\x1d\x8c\xd9\x8f\x00\xb2\x04\xe9\x80\x09\x98\xec\xf8\x42\x7e",
-                    *(UInt128 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRMD5() test 5\n", __func__);
+                    *(UInt128 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWMD5() test 5\n", __func__);
     
     s = "a";
-    BRMD5(md, s, strlen(s));
+    LWMD5(md, s, strlen(s));
     if (! UInt128Eq(*(UInt128 *)"\x0c\xc1\x75\xb9\xc0\xf1\xb6\xa8\x31\xc3\x99\xe2\x69\x77\x26\x61",
-                    *(UInt128 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: BRMD5() test 6\n", __func__);
+                    *(UInt128 *)md)) r = 0, fprintf(stderr, "***FAILED*** %s: LWMD5() test 6\n", __func__);
     
     // test sha3-256
     
     s = "";
-    BRSHA3_256(md, s, strlen(s));
+    LWSHA3_256(md, s, strlen(s));
     if (! UInt256Eq(*(UInt256 *)"\xa7\xff\xc6\xf8\xbf\x1e\xd7\x66\x51\xc1\x47\x56\xa0\x61\xd6\x62\xf5\x80\xff\x4d\xe4"
                     "\x3b\x49\xfa\x82\xd8\x0a\x4b\x80\xf8\x43\x4a", *(UInt256 *)md))
         r = 0, fprintf(stderr, "***FAILED*** %s: SHA3-256() test 7\n", __func__);
     
     s = "abc";
-    BRSHA3_256(md, s, strlen(s));
+    LWSHA3_256(md, s, strlen(s));
     if (! UInt256Eq(*(UInt256 *)"\x3a\x98\x5d\xa7\x4f\xe2\x25\xb2\x04\x5c\x17\x2d\x6b\xd3\x90\xbd\x85\x5f\x08\x6e\x3e"
                     "\x9d\x52\x5b\x46\xbf\xe2\x45\x11\x43\x15\x32", *(UInt256 *)md))
         r = 0, fprintf(stderr, "***FAILED*** %s: SHA3-256() test 8\n", __func__);
     
     s =
     "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu";
-    BRSHA3_256(md, s, strlen(s));
+    LWSHA3_256(md, s, strlen(s));
     if (! UInt256Eq(*(UInt256 *)"\x91\x6f\x60\x61\xfe\x87\x97\x41\xca\x64\x69\xb4\x39\x71\xdf\xdb\x28\xb1\xa3\x2d\xc3"
                     "\x6c\xb3\x25\x4e\x81\x2b\xe2\x7a\xad\x1d\x18", *(UInt256 *)md))
         r = 0, fprintf(stderr, "***FAILED*** %s: SHA3-256() test 9\n", __func__);
@@ -575,7 +548,7 @@ int BRHashTests()
     // test keccak-256
     
     s = "";
-    BRKeccak256(md, s, strlen(s));
+    LWKeccak256(md, s, strlen(s));
     if (! UInt256Eq(*(UInt256 *)"\xc5\xd2\x46\x01\x86\xf7\x23\x3c\x92\x7e\x7d\xb2\xdc\xc7\x03\xc0\xe5\x00\xb6\x53\xca"
                     "\x82\x27\x3b\x7b\xfa\xd8\x04\x5d\x85\xa4\x70", *(UInt256 *)md))
         r = 0, fprintf(stderr, "***FAILED*** %s: Keccak-256() test 10\n", __func__);
@@ -583,7 +556,7 @@ int BRHashTests()
     return r;
 }
 
-int BRMacTests()
+int LWMacTests()
 {
     int r = 1;
 
@@ -593,52 +566,52 @@ int BRMacTests()
     d1[] = "Hi There";
     uint8_t mac[64];
     
-    BRHMAC(mac, BRSHA224, 224/8, k1, sizeof(k1) - 1, d1, sizeof(d1) - 1);
+    LWHMAC(mac, LWSHA224, 224/8, k1, sizeof(k1) - 1, d1, sizeof(d1) - 1);
     if (memcmp("\x89\x6f\xb1\x12\x8a\xbb\xdf\x19\x68\x32\x10\x7c\xd4\x9d\xf3\x3f\x47\xb4\xb1\x16\x99\x12\xba\x4f\x53"
                "\x68\x4b\x22", mac, 28) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMAC() sha224 test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMAC() sha224 test 1\n", __func__);
 
-    BRHMAC(mac, BRSHA256, 256/8, k1, sizeof(k1) - 1, d1, sizeof(d1) - 1);
+    LWHMAC(mac, LWSHA256, 256/8, k1, sizeof(k1) - 1, d1, sizeof(d1) - 1);
     if (memcmp("\xb0\x34\x4c\x61\xd8\xdb\x38\x53\x5c\xa8\xaf\xce\xaf\x0b\xf1\x2b\x88\x1d\xc2\x00\xc9\x83\x3d\xa7\x26"
                "\xe9\x37\x6c\x2e\x32\xcf\xf7", mac, 32) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMAC() sha256 test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMAC() sha256 test 1\n", __func__);
 
-    BRHMAC(mac, BRSHA384, 384/8, k1, sizeof(k1) - 1, d1, sizeof(d1) - 1);
+    LWHMAC(mac, LWSHA384, 384/8, k1, sizeof(k1) - 1, d1, sizeof(d1) - 1);
     if (memcmp("\xaf\xd0\x39\x44\xd8\x48\x95\x62\x6b\x08\x25\xf4\xab\x46\x90\x7f\x15\xf9\xda\xdb\xe4\x10\x1e\xc6\x82"
                "\xaa\x03\x4c\x7c\xeb\xc5\x9c\xfa\xea\x9e\xa9\x07\x6e\xde\x7f\x4a\xf1\x52\xe8\xb2\xfa\x9c\xb6", mac, 48)
         != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMAC() sha384 test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMAC() sha384 test 1\n", __func__);
 
-    BRHMAC(mac, BRSHA512, 512/8, k1, sizeof(k1) - 1, d1, sizeof(d1) - 1);
+    LWHMAC(mac, LWSHA512, 512/8, k1, sizeof(k1) - 1, d1, sizeof(d1) - 1);
     if (memcmp("\x87\xaa\x7c\xde\xa5\xef\x61\x9d\x4f\xf0\xb4\x24\x1a\x1d\x6c\xb0\x23\x79\xf4\xe2\xce\x4e\xc2\x78\x7a"
                "\xd0\xb3\x05\x45\xe1\x7c\xde\xda\xa8\x33\xb7\xd6\xb8\xa7\x02\x03\x8b\x27\x4e\xae\xa3\xf4\xe4\xbe\x9d"
                "\x91\x4e\xeb\x61\xf1\x70\x2e\x69\x6c\x20\x3a\x12\x68\x54", mac, 64) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMAC() sha512 test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMAC() sha512 test 1\n", __func__);
 
     const char k2[] = "Jefe",
     d2[] = "what do ya want for nothing?";
 
-    BRHMAC(mac, BRSHA224, 224/8, k2, sizeof(k2) - 1, d2, sizeof(d2) - 1);
+    LWHMAC(mac, LWSHA224, 224/8, k2, sizeof(k2) - 1, d2, sizeof(d2) - 1);
     if (memcmp("\xa3\x0e\x01\x09\x8b\xc6\xdb\xbf\x45\x69\x0f\x3a\x7e\x9e\x6d\x0f\x8b\xbe\xa2\xa3\x9e\x61\x48\x00\x8f"
                "\xd0\x5e\x44", mac, 28) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMAC() sha224 test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMAC() sha224 test 2\n", __func__);
     
-    BRHMAC(mac, BRSHA256, 256/8, k2, sizeof(k2) - 1, d2, sizeof(d2) - 1);
+    LWHMAC(mac, LWSHA256, 256/8, k2, sizeof(k2) - 1, d2, sizeof(d2) - 1);
     if (memcmp("\x5b\xdc\xc1\x46\xbf\x60\x75\x4e\x6a\x04\x24\x26\x08\x95\x75\xc7\x5a\x00\x3f\x08\x9d\x27\x39\x83\x9d"
                "\xec\x58\xb9\x64\xec\x38\x43", mac, 32) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMAC() sha256 test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMAC() sha256 test 2\n", __func__);
     
-    BRHMAC(mac, BRSHA384, 384/8, k2, sizeof(k2) - 1, d2, sizeof(d2) - 1);
+    LWHMAC(mac, LWSHA384, 384/8, k2, sizeof(k2) - 1, d2, sizeof(d2) - 1);
     if (memcmp("\xaf\x45\xd2\xe3\x76\x48\x40\x31\x61\x7f\x78\xd2\xb5\x8a\x6b\x1b\x9c\x7e\xf4\x64\xf5\xa0\x1b\x47\xe4"
                "\x2e\xc3\x73\x63\x22\x44\x5e\x8e\x22\x40\xca\x5e\x69\xe2\xc7\x8b\x32\x39\xec\xfa\xb2\x16\x49", mac, 48)
         != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMAC() sha384 test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMAC() sha384 test 2\n", __func__);
     
-    BRHMAC(mac, BRSHA512, 512/8, k2, sizeof(k2) - 1, d2, sizeof(d2) - 1);
+    LWHMAC(mac, LWSHA512, 512/8, k2, sizeof(k2) - 1, d2, sizeof(d2) - 1);
     if (memcmp("\x16\x4b\x7a\x7b\xfc\xf8\x19\xe2\xe3\x95\xfb\xe7\x3b\x56\xe0\xa3\x87\xbd\x64\x22\x2e\x83\x1f\xd6\x10"
                "\x27\x0c\xd7\xea\x25\x05\x54\x97\x58\xbf\x75\xc0\x5a\x99\x4a\x6d\x03\x4f\x65\xf8\xf0\xe6\xfd\xca\xea"
                "\xb1\xa3\x4d\x4a\x6b\x4b\x63\x6e\x07\x0a\x38\xbc\xe7\x37", mac, 64) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMAC() sha512 test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMAC() sha512 test 2\n", __func__);
     
     // test poly1305
 
@@ -646,9 +619,9 @@ int BRMacTests()
     msg1[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
     "\0\0\0\0\0\0\0\0\0\0\0";
     
-    BRPoly1305(mac, key1, msg1, sizeof(msg1) - 1);
+    LWPoly1305(mac, key1, msg1, sizeof(msg1) - 1);
     if (memcmp("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", mac, 16) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPoly1305() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPoly1305() test 1\n", __func__);
 
     const char key2[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x36\xe5\xf6\xb5\xc5\xe0\x60\x70\xf0\xef\xca\x96\x22\x7a\x86"
     "\x3e",
@@ -657,9 +630,9 @@ int BRMacTests()
     "Contribution\". Such statements include oral statements in IETF sessions, as well as written and electronic "
     "communications made at any time or place, which are addressed to";
 
-    BRPoly1305(mac, key2, msg2, sizeof(msg2) - 1);
+    LWPoly1305(mac, key2, msg2, sizeof(msg2) - 1);
     if (memcmp("\x36\xe5\xf6\xb5\xc5\xe0\x60\x70\xf0\xef\xca\x96\x22\x7a\x86\x3e", mac, 16) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPoly1305() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPoly1305() test 2\n", __func__);
 
     const char key3[] = "\x36\xe5\xf6\xb5\xc5\xe0\x60\x70\xf0\xef\xca\x96\x22\x7a\x86\x3e\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
     "\0",
@@ -668,119 +641,119 @@ int BRMacTests()
     "Contribution\". Such statements include oral statements in IETF sessions, as well as written and electronic "
     "communications made at any time or place, which are addressed to";
 
-    BRPoly1305(mac, key3, msg3, sizeof(msg3) - 1);
+    LWPoly1305(mac, key3, msg3, sizeof(msg3) - 1);
     if (memcmp("\xf3\x47\x7e\x7c\xd9\x54\x17\xaf\x89\xa6\xb8\x79\x4c\x31\x0c\xf0", mac, 16) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPoly1305() test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPoly1305() test 3\n", __func__);
     
     const char key4[] = "\x1c\x92\x40\xa5\xeb\x55\xd3\x8a\xf3\x33\x88\x86\x04\xf6\xb5\xf0\x47\x39\x17\xc1\x40\x2b\x80"
     "\x09\x9d\xca\x5c\xbc\x20\x70\x75\xc0",
     msg4[] = "'Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe:\nAll mimsy were the borogoves,\n"
     "And the mome raths outgrabe.";
 
-    BRPoly1305(mac, key4, msg4, sizeof(msg4) - 1);
+    LWPoly1305(mac, key4, msg4, sizeof(msg4) - 1);
     if (memcmp("\x45\x41\x66\x9a\x7e\xaa\xee\x61\xe7\x08\xdc\x7c\xbc\xc5\xeb\x62", mac, 16) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPoly1305() test 4\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPoly1305() test 4\n", __func__);
 
     const char key5[] = "\x02\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
     msg5[] = "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
 
-    BRPoly1305(mac, key5, msg5, sizeof(msg5) - 1);
+    LWPoly1305(mac, key5, msg5, sizeof(msg5) - 1);
     if (memcmp("\x03\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", mac, 16) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPoly1305() test 5\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPoly1305() test 5\n", __func__);
 
     const char key6[] = "\x02\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
     "\xFF",
     msg6[] = "\x02\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
     
-    BRPoly1305(mac, key6, msg6, sizeof(msg6) - 1);
+    LWPoly1305(mac, key6, msg6, sizeof(msg6) - 1);
     if (memcmp("\x03\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", mac, 16) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPoly1305() test 6\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPoly1305() test 6\n", __func__);
 
     const char key7[] = "\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
     msg7[] = "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xF0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
     "\xFF\xFF\xFF\xFF\xFF\xFF\x11\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
     
-    BRPoly1305(mac, key7, msg7, sizeof(msg7) - 1);
+    LWPoly1305(mac, key7, msg7, sizeof(msg7) - 1);
     if (memcmp("\x05\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", mac, 16) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPoly1305() test 7\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPoly1305() test 7\n", __func__);
 
     const char key8[] = "\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
     msg8[] = "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFB\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE"
     "\xFE\xFE\xFE\xFE\xFE\xFE\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01";
     
-    BRPoly1305(mac, key8, msg8, sizeof(msg8) - 1);
+    LWPoly1305(mac, key8, msg8, sizeof(msg8) - 1);
     if (memcmp("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", mac, 16) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPoly1305() test 8\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPoly1305() test 8\n", __func__);
 
     const char key9[] = "\x02\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
     msg9[] = "\xFD\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
     
-    BRPoly1305(mac, key9, msg9, sizeof(msg9) - 1);
+    LWPoly1305(mac, key9, msg9, sizeof(msg9) - 1);
     if (memcmp("\xFA\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", mac, 16) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPoly1305() test 9\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPoly1305() test 9\n", __func__);
 
     const char key10[] = "\x01\0\0\0\0\0\0\0\x04\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
     msg10[] = "\xE3\x35\x94\xD7\x50\x5E\x43\xB9\0\0\0\0\0\0\0\0\x33\x94\xD7\x50\x5E\x43\x79\xCD\x01\0\0\0\0\0\0\0\0\0\0"
     "\0\0\0\0\0\0\0\0\0\0\0\0\0\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
     
-    BRPoly1305(mac, key10, msg10, sizeof(msg10) - 1);
+    LWPoly1305(mac, key10, msg10, sizeof(msg10) - 1);
     if (memcmp("\x14\0\0\0\0\0\0\0\x55\0\0\0\0\0\0\0", mac, 16) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPoly1305() test 10\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPoly1305() test 10\n", __func__);
 
     const char key11[] = "\x01\0\0\0\0\0\0\0\x04\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
     msg11[] = "\xE3\x35\x94\xD7\x50\x5E\x43\xB9\0\0\0\0\0\0\0\0\x33\x94\xD7\x50\x5E\x43\x79\xCD\x01\0\0\0\0\0\0\0\0\0\0"
     "\0\0\0\0\0\0\0\0\0\0\0\0\0";
     
-    BRPoly1305(mac, key11, msg11, sizeof(msg11) - 1);
+    LWPoly1305(mac, key11, msg11, sizeof(msg11) - 1);
     if (memcmp("\x13\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", mac, 16) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPoly1305() test 11\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPoly1305() test 11\n", __func__);
     
     return r;
 }
 
-int BRDrbgTests()
+int LWDrbgTests()
 {
     int r = 1;
     const char seed1[] = "\xa7\x6e\x77\xa9\x69\xab\x92\x64\x51\x81\xf0\x15\x78\x02\x52\x37\x46\xc3\x4b\xf3\x21\x86\x76"
     "\x41", nonce1[] = "\x05\x1e\xd6\xba\x39\x36\x80\x33\xad\xc9\x3d\x4e";
     uint8_t out[2048/8], K[512/8], V[512/8];
     
-    BRHMACDRBG(out, 896/8, K, V, BRSHA224, 224/8, seed1, sizeof(seed1) - 1, nonce1, sizeof(nonce1) - 1, NULL, 0);
-    BRHMACDRBG(out, 896/8, K, V, BRSHA224, 224/8, NULL, 0, NULL, 0, NULL, 0);
+    LWHMACDRBG(out, 896/8, K, V, LWSHA224, 224/8, seed1, sizeof(seed1) - 1, nonce1, sizeof(nonce1) - 1, NULL, 0);
+    LWHMACDRBG(out, 896/8, K, V, LWSHA224, 224/8, NULL, 0, NULL, 0, NULL, 0);
     if (memcmp("\x89\x25\x98\x7d\xb5\x56\x6e\x60\x52\x0f\x09\xbd\xdd\xab\x48\x82\x92\xbe\xd9\x2c\xd3\x85\xe5\xb6\xfc"
                "\x22\x3e\x19\x19\x64\x0b\x4e\x34\xe3\x45\x75\x03\x3e\x56\xc0\xa8\xf6\x08\xbe\x21\xd3\xd2\x21\xc6\x7d"
                "\x39\xab\xec\x98\xd8\x13\x12\xf3\xa2\x65\x3d\x55\xff\xbf\x44\xc3\x37\xc8\x2b\xed\x31\x4c\x21\x1b\xe2"
                "\x3e\xc3\x94\x39\x9b\xa3\x51\xc4\x68\x7d\xce\x64\x9e\x7c\x2a\x1b\xa7\xb0\xb5\xda\xb1\x25\x67\x1b\x1b"
                "\xcf\x90\x08\xda\x65\xca\xd6\x12\xd9\x5d\xdc\x92", out, 896/8) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMACDRBG() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMACDRBG() test 1\n", __func__);
 
     const char seed2[] = "\xf6\xe6\x8b\xb0\x58\x5c\x84\xd7\xb9\xf1\x75\x79\xad\x9b\x9a\x8a\xa2\x66\x6a\xbf\x4e\x8b\x44"
     "\xa3", nonce2[] = "\xa4\x33\x11\xd5\x78\x42\xef\x09\x6b\x66\xfa\x5e",
     ps2[] = "\x2f\x50\x7e\x12\xd6\x8a\x88\x0f\xa7\x0d\x6e\x5e\x54\x39\x15\x38\x17\x32\x97\x81\x4e\x06\xd7\xfd";
 
-    BRHMACDRBG(out, 896/8, K, V, BRSHA224, 224/8, seed2, sizeof(seed2) - 1, nonce2, sizeof(nonce2) - 1,
+    LWHMACDRBG(out, 896/8, K, V, LWSHA224, 224/8, seed2, sizeof(seed2) - 1, nonce2, sizeof(nonce2) - 1,
                ps2, sizeof(ps2) - 1);
-    BRHMACDRBG(out, 896/8, K, V, BRSHA224, 224/8, NULL, 0, NULL, 0, NULL, 0);
+    LWHMACDRBG(out, 896/8, K, V, LWSHA224, 224/8, NULL, 0, NULL, 0, NULL, 0);
     if (memcmp("\x10\xc2\xf9\x3c\xa9\x9a\x8e\x8e\xcf\x22\x54\x00\xc8\x04\xa7\xb3\x68\xd9\x3c\xee\x3b\xfa\x6f\x44\x59"
                "\x20\xa6\xa9\x12\xd2\x68\xd6\x91\xf1\x78\x8b\xaf\x01\x3f\xb1\x68\x50\x1c\xa1\x56\xb5\x71\xba\x04\x7d"
                "\x8d\x02\x9d\xc1\xc1\xee\x07\xfc\xa5\x0a\xf6\x99\xc5\xbc\x2f\x79\x0a\xcf\x27\x80\x41\x51\x81\x41\xe7"
                "\xdc\x91\x64\xc3\xe5\x71\xb2\x65\xfb\x89\x54\x26\x1d\x92\xdb\xf2\x0a\xe0\x2f\xc2\xb7\x80\xc0\x18\xb6"
                "\xb5\x4b\x43\x20\xf2\xb8\x9d\x34\x33\x07\xfb\xb2", out, 896/8) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMACDRBG() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMACDRBG() test 2\n", __func__);
 
     const char seed3[] = "\xca\x85\x19\x11\x34\x93\x84\xbf\xfe\x89\xde\x1c\xbd\xc4\x6e\x68\x31\xe4\x4d\x34\xa4\xfb\x93"
     "\x5e\xe2\x85\xdd\x14\xb7\x1a\x74\x88",
     nonce3[] = "\x65\x9b\xa9\x6c\x60\x1d\xc6\x9f\xc9\x02\x94\x08\x05\xec\x0c\xa8";
     
-    BRHMACDRBG(out, 1024/8, K, V, BRSHA256, 256/8, seed3, sizeof(seed3) - 1, nonce3, sizeof(nonce3) - 1, NULL, 0);
-    BRHMACDRBG(out, 1024/8, K, V, BRSHA256, 256/8, NULL, 0, NULL, 0, NULL, 0);
+    LWHMACDRBG(out, 1024/8, K, V, LWSHA256, 256/8, seed3, sizeof(seed3) - 1, nonce3, sizeof(nonce3) - 1, NULL, 0);
+    LWHMACDRBG(out, 1024/8, K, V, LWSHA256, 256/8, NULL, 0, NULL, 0, NULL, 0);
     if (memcmp("\xe5\x28\xe9\xab\xf2\xde\xce\x54\xd4\x7c\x7e\x75\xe5\xfe\x30\x21\x49\xf8\x17\xea\x9f\xb4\xbe\xe6\xf4"
                "\x19\x96\x97\xd0\x4d\x5b\x89\xd5\x4f\xbb\x97\x8a\x15\xb5\xc4\x43\xc9\xec\x21\x03\x6d\x24\x60\xb6\xf7"
                "\x3e\xba\xd0\xdc\x2a\xba\x6e\x62\x4a\xbf\x07\x74\x5b\xc1\x07\x69\x4b\xb7\x54\x7b\xb0\x99\x5f\x70\xde"
                "\x25\xd6\xb2\x9e\x2d\x30\x11\xbb\x19\xd2\x76\x76\xc0\x71\x62\xc8\xb5\xcc\xde\x06\x68\x96\x1d\xf8\x68"
                "\x03\x48\x2c\xb3\x7e\xd6\xd5\xc0\xbb\x8d\x50\xcf\x1f\x50\xd4\x76\xaa\x04\x58\xbd\xab\xa8\x06\xf4\x8b"
                "\xe9\xdc\xb8", out, 1024/8) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMACDRBG() test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMACDRBG() test 3\n", __func__);
 
     const char seed4[] = "\x5c\xac\xc6\x81\x65\xa2\xe2\xee\x20\x81\x2f\x35\xec\x73\xa7\x9d\xbf\x30\xfd\x47\x54\x76\xac"
     "\x0c\x44\xfc\x61\x74\xcd\xac\x2b\x55",
@@ -788,23 +761,23 @@ int BRDrbgTests()
     ps4[] = "\xe7\x2d\xd8\x59\x0d\x4e\xd5\x29\x55\x15\xc3\x5e\xd6\x19\x9e\x9d\x21\x1b\x8f\x06\x9b\x30\x58\xca\xa6\x67"
     "\x0b\x96\xef\x12\x08\xd0";
     
-    BRHMACDRBG(out, 1024/8, K, V, BRSHA256, 256/8, seed4, sizeof(seed4) - 1, nonce4, sizeof(nonce4) - 1,
+    LWHMACDRBG(out, 1024/8, K, V, LWSHA256, 256/8, seed4, sizeof(seed4) - 1, nonce4, sizeof(nonce4) - 1,
                ps4, sizeof(ps4) - 1);
-    BRHMACDRBG(out, 1024/8, K, V, BRSHA256, 256/8, NULL, 0, NULL, 0, NULL, 0);
+    LWHMACDRBG(out, 1024/8, K, V, LWSHA256, 256/8, NULL, 0, NULL, 0, NULL, 0);
     if (memcmp("\xf1\x01\x2c\xf5\x43\xf9\x45\x33\xdf\x27\xfe\xdf\xbf\x58\xe5\xb7\x9a\x3d\xc5\x17\xa9\xc4\x02\xbd\xbf"
                "\xc9\xa0\xc0\xf7\x21\xf9\xd5\x3f\xaf\x4a\xaf\xdc\x4b\x8f\x7a\x1b\x58\x0f\xca\xa5\x23\x38\xd4\xbd\x95"
                "\xf5\x89\x66\xa2\x43\xcd\xcd\x3f\x44\x6e\xd4\xbc\x54\x6d\x9f\x60\x7b\x19\x0d\xd6\x99\x54\x45\x0d\x16"
                "\xcd\x0e\x2d\x64\x37\x06\x7d\x8b\x44\xd1\x9a\x6a\xf7\xa7\xcf\xa8\x79\x4e\x5f\xbd\x72\x8e\x8f\xb2\xf2"
                "\xe8\xdb\x5d\xd4\xff\x1a\xa2\x75\xf3\x58\x86\x09\x8e\x80\xff\x84\x48\x86\x06\x0d\xa8\xb1\xe7\x13\x78"
                "\x46\xb2\x3b", out, 1024/8) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMACDRBG() test 4\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMACDRBG() test 4\n", __func__);
 
     const char seed5[] = "\xa1\xdc\x2d\xfe\xda\x4f\x3a\x11\x24\xe0\xe7\x5e\xbf\xbe\x5f\x98\xca\xc1\x10\x18\x22\x1d\xda"
     "\x3f\xdc\xf8\xf9\x12\x5d\x68\x44\x7a",
     nonce5[] = "\xba\xe5\xea\x27\x16\x65\x40\x51\x52\x68\xa4\x93\xa9\x6b\x51\x87";
     
-    BRHMACDRBG(out, 1536/8, K, V, BRSHA384, 384/8, seed5, sizeof(seed5) - 1, nonce5, sizeof(nonce5) - 1, NULL, 0);
-    BRHMACDRBG(out, 1536/8, K, V, BRSHA384, 384/8, NULL, 0, NULL, 0, NULL, 0);
+    LWHMACDRBG(out, 1536/8, K, V, LWSHA384, 384/8, seed5, sizeof(seed5) - 1, nonce5, sizeof(nonce5) - 1, NULL, 0);
+    LWHMACDRBG(out, 1536/8, K, V, LWSHA384, 384/8, NULL, 0, NULL, 0, NULL, 0);
     if (memcmp("\x22\x82\x93\xe5\x9b\x1e\x45\x45\xa4\xff\x9f\x23\x26\x16\xfc\x51\x08\xa1\x12\x8d\xeb\xd0\xf7\xc2\x0a"
                "\xce\x83\x7c\xa1\x05\xcb\xf2\x4c\x0d\xac\x1f\x98\x47\xda\xfd\x0d\x05\x00\x72\x1f\xfa\xd3\xc6\x84\xa9"
                "\x92\xd1\x10\xa5\x49\xa2\x64\xd1\x4a\x89\x11\xc5\x0b\xe8\xcd\x6a\x7e\x8f\xac\x78\x3a\xd9\x5b\x24\xf6"
@@ -813,7 +786,7 @@ int BRDrbgTests()
                "\x9c\xeb\x6a\x5e\xaf\x49\x93\xa8\x2c\x3f\x1b\x75\x8d\x7c\x53\xe3\x09\x4e\xea\xc6\x3d\xc2\x55\xbe\x6d"
                "\xcd\xcc\x2b\x51\xe5\xca\x45\xd2\xb2\x06\x84\xa5\xa8\xfa\x58\x06\xb9\x6f\x84\x61\xeb\xf5\x1b\xc5\x15"
                "\xa7\xdd\x8c\x54\x75\xc0\xe7\x0f\x2f\xd0\xfa\xf7\x86\x9a\x99\xab\x6c", out, 1536/8) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMACDRBG() test 5\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMACDRBG() test 5\n", __func__);
 
     const char seed6[] = "\x2c\xd9\x68\xba\xcd\xa2\xbc\x31\x4d\x2f\xb4\x1f\xe4\x33\x54\xfb\x76\x11\x34\xeb\x19\xee\xc6"
     "\x04\x31\xe2\xf3\x67\x55\xb8\x51\x26",
@@ -821,9 +794,9 @@ int BRDrbgTests()
     ps6[] = "\x59\xfa\x82\x35\x10\x88\x21\xac\xcb\xd3\xc1\x4e\xaf\x76\x85\x6d\x6a\x07\xf4\x33\x83\xdb\x4c\xc6\x03\x80"
     "\x40\xb1\x88\x10\xd5\x3c";
 
-    BRHMACDRBG(out, 1536/8, K, V, BRSHA384, 384/8, seed6, sizeof(seed6) - 1, nonce6, sizeof(nonce6) - 1,
+    LWHMACDRBG(out, 1536/8, K, V, LWSHA384, 384/8, seed6, sizeof(seed6) - 1, nonce6, sizeof(nonce6) - 1,
                ps6, sizeof(ps6) - 1);
-    BRHMACDRBG(out, 1536/8, K, V, BRSHA384, 384/8, NULL, 0, NULL, 0, NULL, 0);
+    LWHMACDRBG(out, 1536/8, K, V, LWSHA384, 384/8, NULL, 0, NULL, 0, NULL, 0);
     if (memcmp("\x06\x05\x1c\xe6\xb2\xf1\xc3\x43\x78\xe0\x8c\xaf\x8f\xe8\x36\x20\x1f\xf7\xec\x2d\xb8\xfc\x5a\x25\x19"
                "\xad\xd2\x52\x4d\x90\x47\x01\x94\xb2\x47\xaf\x3a\x34\xa6\x73\x29\x8e\x57\x07\x0b\x25\x6f\x59\xfd\x09"
                "\x86\x32\x76\x8e\x2d\x55\x13\x7d\x6c\x17\xb1\xa5\x3f\xe4\x5d\x6e\xd0\xe3\x1d\x49\xe6\x48\x20\xdb\x14"
@@ -832,14 +805,14 @@ int BRDrbgTests()
                "\xaf\xcc\x13\xd4\x00\x96\xd9\x97\x94\x88\x57\xa8\x94\xd0\xef\x8b\x32\x35\xc3\x21\x3b\xa8\x5c\x50\xc2"
                "\xf3\xd6\x1b\x0d\x10\x4e\xcc\xfc\xf3\x6c\x35\xfe\x5e\x49\xe7\x60\x2c\xb1\x53\x3d\xe1\x2f\x0b\xec\x61"
                "\x3a\x0e\xd9\x63\x38\x21\x95\x7e\x5b\x7c\xb3\x2f\x60\xb7\xc0\x2f\xa4", out, 1536/8) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMACDRBG() test 6\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMACDRBG() test 6\n", __func__);
 
     const char seed7[] = "\x35\x04\x9f\x38\x9a\x33\xc0\xec\xb1\x29\x32\x38\xfd\x95\x1f\x8f\xfd\x51\x7d\xfd\xe0\x60\x41"
     "\xd3\x29\x45\xb3\xe2\x69\x14\xba\x15",
     nonce7[] = "\xf7\x32\x87\x60\xbe\x61\x68\xe6\xaa\x9f\xb5\x47\x84\x98\x9a\x11";
     
-    BRHMACDRBG(out, 2048/8, K, V, BRSHA512, 512/8, seed7, sizeof(seed7) - 1, nonce7, sizeof(nonce7) - 1, NULL, 0);
-    BRHMACDRBG(out, 2048/8, K, V, BRSHA512, 512/8, NULL, 0, NULL, 0, NULL, 0);
+    LWHMACDRBG(out, 2048/8, K, V, LWSHA512, 512/8, seed7, sizeof(seed7) - 1, nonce7, sizeof(nonce7) - 1, NULL, 0);
+    LWHMACDRBG(out, 2048/8, K, V, LWSHA512, 512/8, NULL, 0, NULL, 0, NULL, 0);
     if (memcmp("\xe7\x64\x91\xb0\x26\x0a\xac\xfd\xed\x01\xad\x39\xfb\xf1\xa6\x6a\x88\x28\x4c\xaa\x51\x23\x36\x8a\x2a"
                "\xd9\x33\x0e\xe4\x83\x35\xe3\xc9\xc9\xba\x90\xe6\xcb\xc9\x42\x99\x62\xd6\x0c\x1a\x66\x61\xed\xcf\xaa"
                "\x31\xd9\x72\xb8\x26\x4b\x9d\x45\x62\xcf\x18\x49\x41\x28\xa0\x92\xc1\x7a\x8d\xa6\xf3\x11\x3e\x8a\x7e"
@@ -851,7 +824,7 @@ int BRDrbgTests()
                "\x91\x4f\x09\x51\x36\xcb\xe6\x34\x55\x5c\xe0\xbb\x26\x36\x18\xdc\x5c\x36\x72\x91\xce\x08\x25\x51\x89"
                "\x87\x15\x4f\xe9\xec\xb0\x52\xb3\xf0\xa2\x56\xfc\xc3\x0c\xc1\x45\x72\x53\x1c\x96\x28\x97\x36\x39\xbe"
                "\xda\x45\x6f\x2b\xdd\xf6", out, 2048/8) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMACDRBG() test 7\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMACDRBG() test 7\n", __func__);
 
     const char seed8[] = "\x73\x52\x9b\xba\x71\xa3\xd4\xb4\xfc\xf9\xa7\xed\xee\xd2\x69\xdb\xdc\x37\x48\xb9\x0d\xf6\x8c"
     "\x0d\x00\xe2\x45\xde\x54\x69\x8c\x77",
@@ -859,9 +832,9 @@ int BRDrbgTests()
     ps8[] = "\xe2\xcc\x19\xe3\x15\x95\xd0\xe4\xde\x9e\x8b\xd3\xb2\x36\xde\xc2\xd4\xb0\x32\xc3\xdd\x5b\xf9\x89\x1c\x28"
     "\x4c\xd1\xba\xc6\x7b\xdb";
     
-    BRHMACDRBG(out, 2048/8, K, V, BRSHA512, 512/8, seed8, sizeof(seed8) - 1, nonce8, sizeof(nonce8) - 1,
+    LWHMACDRBG(out, 2048/8, K, V, LWSHA512, 512/8, seed8, sizeof(seed8) - 1, nonce8, sizeof(nonce8) - 1,
                ps8, sizeof(ps8) - 1);
-    BRHMACDRBG(out, 2048/8, K, V, BRSHA512, 512/8, NULL, 0, NULL, 0, NULL, 0);
+    LWHMACDRBG(out, 2048/8, K, V, LWSHA512, 512/8, NULL, 0, NULL, 0, NULL, 0);
     if (memcmp("\x1a\x73\xd5\x8b\x73\x42\xc3\xc9\x33\xe3\xba\x15\xee\xdd\x82\x70\x98\x86\x91\xc3\x79\x4b\x45\xaa\x35"
                "\x85\x70\x39\x15\x71\x88\x1c\x0d\x9c\x42\x89\xe5\xb1\x98\xdb\x55\x34\xc3\xcb\x84\x66\xab\x48\x25\x0f"
                "\xa6\x7f\x24\xcb\x19\xb7\x03\x8e\x46\xaf\x56\x68\x7b\xab\x7e\x5d\xe3\xc8\x2f\xa7\x31\x2f\x54\xdc\x0f"
@@ -873,12 +846,12 @@ int BRDrbgTests()
                "\x90\x44\x91\xdf\x08\x08\x9b\xed\x00\x4a\xd5\x6e\x12\xf8\xea\x1a\x20\x08\x83\xad\x72\xb3\xb9\xfa\xe1"
                "\x2b\x4e\xb6\x5d\x5c\x2b\xac\xb3\xce\x46\xc7\xc4\x84\x64\xc9\xc2\x91\x42\xfb\x35\xe7\xbc\x26\x7c\xe8"
                "\x52\x29\x6a\xc0\x42\xf9", out, 2048/8) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRHMACDRBG() test 8\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWHMACDRBG() test 8\n", __func__);
     
     return r;
 }
 
-int BRCypherTests()
+int LWCypherTests()
 {
     int r = 1;
     const char key[] = "\0\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16"
@@ -893,13 +866,13 @@ int BRCypherTests()
     "\x78\x5e\x42\x87\x4d";
     uint8_t out[sizeof(msg) - 1];
 
-    BRChacha20(out, key, iv, msg, sizeof(msg) - 1, 1);
+    LWChacha20(out, key, iv, msg, sizeof(msg) - 1, 1);
     if (memcmp(cypher, out, sizeof(out)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRChacha20() cypher test 0\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWChacha20() cypher test 0\n", __func__);
 
-    BRChacha20(out, key, iv, out, sizeof(out), 1);
+    LWChacha20(out, key, iv, out, sizeof(out), 1);
     if (memcmp(msg, out, sizeof(out)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRChacha20() de-cypher test 0\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWChacha20() de-cypher test 0\n", __func__);
 
     const char key1[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
     iv1[] = "\0\0\0\0\0\0\0\0",
@@ -910,13 +883,13 @@ int BRCypherTests()
     "\x18\xa1\x1c\xc3\x87\xb6\x69\xb2\xee\x65\x86";
     uint8_t out1[sizeof(msg1) - 1];
     
-    BRChacha20(out1, key1, iv1, msg1, sizeof(msg1) - 1, 0);
+    LWChacha20(out1, key1, iv1, msg1, sizeof(msg1) - 1, 0);
     if (memcmp(cypher1, out1, sizeof(out1)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRChacha20() cypher test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWChacha20() cypher test 1\n", __func__);
     
-    BRChacha20(out1, key1, iv1, out1, sizeof(out1), 0);
+    LWChacha20(out1, key1, iv1, out1, sizeof(out1), 0);
     if (memcmp(msg1, out1, sizeof(out1)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRChacha20() de-cypher test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWChacha20() de-cypher test 1\n", __func__);
 
     const char key2[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x01",
     iv2[] = "\0\0\0\0\0\0\0\x02",
@@ -940,13 +913,13 @@ int BRCypherTests()
     "\x86\x2f\x37\x30\xe3\x7c\xfd\xc4\xfd\x80\x6c\x22\xf2\x21";
     uint8_t out2[sizeof(msg2) - 1];
     
-    BRChacha20(out2, key2, iv2, msg2, sizeof(msg2) - 1, 1);
+    LWChacha20(out2, key2, iv2, msg2, sizeof(msg2) - 1, 1);
     if (memcmp(cypher2, out2, sizeof(out2)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRChacha20() cypher test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWChacha20() cypher test 2\n", __func__);
     
-    BRChacha20(out2, key2, iv2, out2, sizeof(out2), 1);
+    LWChacha20(out2, key2, iv2, out2, sizeof(out2), 1);
     if (memcmp(msg2, out2, sizeof(out2)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRChacha20() de-cypher test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWChacha20() de-cypher test 2\n", __func__);
     
     const char key3[] = "\x1c\x92\x40\xa5\xeb\x55\xd3\x8a\xf3\x33\x88\x86\x04\xf6\xb5\xf0\x47\x39\x17\xc1\x40\x2b\x80"
     "\x09\x9d\xca\x5c\xbc\x20\x70\x75\xc0",
@@ -960,18 +933,18 @@ int BRCypherTests()
     "\xa7\x31\xb1\x87\xb5\x8d\xfd\x72\x8a\xfa\x36\x75\x7a\x79\x7a\xc1\x88\xd1";
     uint8_t out3[sizeof(msg3) - 1];
     
-    BRChacha20(out3, key3, iv3, msg3, sizeof(msg3) - 1, 42);
+    LWChacha20(out3, key3, iv3, msg3, sizeof(msg3) - 1, 42);
     if (memcmp(cypher3, out3, sizeof(out3)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRChacha20() cypher test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWChacha20() cypher test 3\n", __func__);
     
-    BRChacha20(out3, key3, iv3, out3, sizeof(out3), 42);
+    LWChacha20(out3, key3, iv3, out3, sizeof(out3), 42);
     if (memcmp(msg3, out3, sizeof(out3)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRChacha20() de-cypher test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWChacha20() de-cypher test 3\n", __func__);
 
     return r;
 }
 
-int BRAuthEncryptTests()
+int LWAuthEncryptTests()
 {
     int r = 1;
     const char msg1[] = "Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, "
@@ -988,14 +961,14 @@ int BRAuthEncryptTests()
     uint8_t out1[16 + sizeof(msg1) - 1];
     size_t len;
 
-    len = BRChacha20Poly1305AEADEncrypt(out1, sizeof(out1), key1, nonce1, msg1, sizeof(msg1) - 1, ad1, sizeof(ad1) - 1);
+    len = LWChacha20Poly1305AEADEncrypt(out1, sizeof(out1), key1, nonce1, msg1, sizeof(msg1) - 1, ad1, sizeof(ad1) - 1);
     if (len != sizeof(cypher1) - 1 || memcmp(cypher1, out1, len) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRChacha20Poly1305AEADEncrypt() cypher test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWChacha20Poly1305AEADEncrypt() cypher test 1\n", __func__);
     
-    len = BRChacha20Poly1305AEADDecrypt(out1, sizeof(out1), key1, nonce1, cypher1, sizeof(cypher1) - 1, ad1,
+    len = LWChacha20Poly1305AEADDecrypt(out1, sizeof(out1), key1, nonce1, cypher1, sizeof(cypher1) - 1, ad1,
                                         sizeof(ad1) - 1);
     if (len != sizeof(msg1) - 1 || memcmp(msg1, out1, len) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRChacha20Poly1305AEADDecrypt() cypher test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWChacha20Poly1305AEADDecrypt() cypher test 1\n", __func__);
     
     const char msg2[] = "Internet-Drafts are draft documents valid for a maximum of six months and may be updated, "
     "replaced, or obsoleted by other documents at any time. It is inappropriate to use Internet-Drafts as reference "
@@ -1017,628 +990,595 @@ int BRAuthEncryptTests()
     "\xa1\x85\x1f\x38";
     uint8_t out2[sizeof(cypher2) - 1];
 
-    len = BRChacha20Poly1305AEADDecrypt(out2, sizeof(out2), key2, nonce2, cypher2, sizeof(cypher2) - 1, ad2,
+    len = LWChacha20Poly1305AEADDecrypt(out2, sizeof(out2), key2, nonce2, cypher2, sizeof(cypher2) - 1, ad2,
                                         sizeof(ad2) - 1);
     if (len != sizeof(msg2) - 1 || memcmp(msg2, out2, len) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRChacha20Poly1305AEADDecrypt() cypher test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWChacha20Poly1305AEADDecrypt() cypher test 2\n", __func__);
 
-    len = BRChacha20Poly1305AEADEncrypt(out2, sizeof(out2), key2, nonce2, msg2, sizeof(msg2) - 1, ad2, sizeof(ad2) - 1);
+    len = LWChacha20Poly1305AEADEncrypt(out2, sizeof(out2), key2, nonce2, msg2, sizeof(msg2) - 1, ad2, sizeof(ad2) - 1);
     if (len != sizeof(cypher2) - 1 || memcmp(cypher2, out2, len) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRChacha20Poly1305AEADEncrypt() cypher test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWChacha20Poly1305AEADEncrypt() cypher test 2\n", __func__);
 
     return r;
 }
 
-int BRKeyTests()
+int LWKeyTests()
 {
     int r = 1;
-    BRKey key, key2;
-    BRAddress addr;
+    LWKey key, key2;
+    LWAddress addr;
     char *msg;
     UInt256 md;
     uint8_t sig[72], pubKey[65];
     size_t sigLen, pkLen;
 
-    if (BRPrivKeyIsValid("S6c56bnXQiBjk9mqSYE7ykVQ7NzrRz"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPrivKeyIsValid() test 0\n", __func__);
+    if (LWPrivKeyIsValid("S6c56bnXQiBjk9mqSYE7ykVQ7NzrRz"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPrivKeyIsValid() test 0\n", __func__);
 
     // mini private key format
-    if (! BRPrivKeyIsValid("S6c56bnXQiBjk9mqSYE7ykVQ7NzrRy"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPrivKeyIsValid() test 1\n", __func__);
+    if (! LWPrivKeyIsValid("S6c56bnXQiBjk9mqSYE7ykVQ7NzrRy"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPrivKeyIsValid() test 1\n", __func__);
 
     printf("\n");
-    BRKeySetPrivKey(&key, "S6c56bnXQiBjk9mqSYE7ykVQ7NzrRy");
-    BRKeyAddress(&key, addr.s, sizeof(addr));
+    LWKeySetPrivKey(&key, "S6c56bnXQiBjk9mqSYE7ykVQ7NzrRy");
+    LWKeyAddress(&key, addr.s, sizeof(addr));
     printf("privKey:S6c56bnXQiBjk9mqSYE7ykVQ7NzrRy = %s\n", addr.s);
-#if BITCOIN_TESTNET
-    if (! BRAddressEq(&addr, "ms8fwvXzrCoyatnGFRaLbepSqwGRxVJQF1"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetPrivKey() test 1\n", __func__);
+#if LITECOIN_TESTNET
+    if (! LWAddressEq(&addr, "ms8fwvXzrCoyatnGFRaLbepSqwGRxVJQF1"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetPrivKey() test 1\n", __func__);
 #else
-    if (! BRAddressEq(&addr, "1CciesT23BNionJeXrbxmjc7ywfiyM4oLW"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetPrivKey() test 1\n", __func__);
+    if (! LWAddressEq(&addr, "1CciesT23BNionJeXrbxmjc7ywfiyM4oLW"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetPrivKey() test 1\n", __func__);
 #endif
 
     // old mini private key format
-    if (! BRPrivKeyIsValid("SzavMBLoXU6kDrqtUVmffv"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPrivKeyIsValid() test 2\n", __func__);
+    if (! LWPrivKeyIsValid("SzavMBLoXU6kDrqtUVmffv"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPrivKeyIsValid() test 2\n", __func__);
 
-    BRKeySetPrivKey(&key, "SzavMBLoXU6kDrqtUVmffv");
-    BRKeyAddress(&key, addr.s, sizeof(addr));
+    LWKeySetPrivKey(&key, "SzavMBLoXU6kDrqtUVmffv");
+    LWKeyAddress(&key, addr.s, sizeof(addr));
     printf("privKey:SzavMBLoXU6kDrqtUVmffv = %s\n", addr.s);
-#if BITCOIN_TESTNET
-    if (! BRAddressEq(&addr, "mrhzp5mstA4Midx85EeCjuaUAAGANMFmRP"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetPrivKey() test 2\n", __func__);
+#if LITECOIN_TESTNET
+    if (! LWAddressEq(&addr, "mrhzp5mstA4Midx85EeCjuaUAAGANMFmRP"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetPrivKey() test 2\n", __func__);
 #else
-    if (! BRAddressEq(&addr, "1CC3X2gu58d6wXUWMffpuzN9JAfTUWu4Kj"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetPrivKey() test 2\n", __func__);
+    if (! LWAddressEq(&addr, "1CC3X2gu58d6wXUWMffpuzN9JAfTUWu4Kj"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetPrivKey() test 2\n", __func__);
 #endif
 
-#if ! BITCOIN_TESTNET
+#if ! LITECOIN_TESTNET
     // uncompressed private key
-    if (! BRPrivKeyIsValid("5Kb8kLf9zgWQnogidDA76MzPL6TsZZY36hWXMssSzNydYXYB9KF"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPrivKeyIsValid() test 3\n", __func__);
+    if (! LWPrivKeyIsValid("5Kb8kLf9zgWQnogidDA76MzPL6TsZZY36hWXMssSzNydYXYB9KF"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPrivKeyIsValid() test 3\n", __func__);
     
-    BRKeySetPrivKey(&key, "5Kb8kLf9zgWQnogidDA76MzPL6TsZZY36hWXMssSzNydYXYB9KF");
-    BRKeyAddress(&key, addr.s, sizeof(addr));
+    LWKeySetPrivKey(&key, "5Kb8kLf9zgWQnogidDA76MzPL6TsZZY36hWXMssSzNydYXYB9KF");
+    LWKeyAddress(&key, addr.s, sizeof(addr));
     printf("privKey:5Kb8kLf9zgWQnogidDA76MzPL6TsZZY36hWXMssSzNydYXYB9KF = %s\n", addr.s);
-    if (! BRAddressEq(&addr, "1CC3X2gu58d6wXUWMffpuzN9JAfTUWu4Kj"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetPrivKey() test 3\n", __func__);
+    if (! LWAddressEq(&addr, "1CC3X2gu58d6wXUWMffpuzN9JAfTUWu4Kj"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetPrivKey() test 3\n", __func__);
 
     // uncompressed private key export
-    char privKey1[BRKeyPrivKey(&key, NULL, 0)];
+    char privKey1[LWKeyPrivKey(&key, NULL, 0)];
     
-    BRKeyPrivKey(&key, privKey1, sizeof(privKey1));
+    LWKeyPrivKey(&key, privKey1, sizeof(privKey1));
     printf("privKey:%s\n", privKey1);
     if (strcmp(privKey1, "5Kb8kLf9zgWQnogidDA76MzPL6TsZZY36hWXMssSzNydYXYB9KF") != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyPrivKey() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyPrivKey() test 1\n", __func__);
     
     // compressed private key
-    if (! BRPrivKeyIsValid("KyvGbxRUoofdw3TNydWn2Z78dBHSy2odn1d3wXWN2o3SAtccFNJL"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPrivKeyIsValid() test 4\n", __func__);
+    if (! LWPrivKeyIsValid("KyvGbxRUoofdw3TNydWn2Z78dBHSy2odn1d3wXWN2o3SAtccFNJL"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPrivKeyIsValid() test 4\n", __func__);
     
-    BRKeySetPrivKey(&key, "KyvGbxRUoofdw3TNydWn2Z78dBHSy2odn1d3wXWN2o3SAtccFNJL");
-    BRKeyAddress(&key, addr.s, sizeof(addr));
+    LWKeySetPrivKey(&key, "KyvGbxRUoofdw3TNydWn2Z78dBHSy2odn1d3wXWN2o3SAtccFNJL");
+    LWKeyAddress(&key, addr.s, sizeof(addr));
     printf("privKey:KyvGbxRUoofdw3TNydWn2Z78dBHSy2odn1d3wXWN2o3SAtccFNJL = %s\n", addr.s);
-    if (! BRAddressEq(&addr, "1JMsC6fCtYWkTjPPdDrYX3we2aBrewuEM3"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetPrivKey() test 4\n", __func__);
+    if (! LWAddressEq(&addr, "1JMsC6fCtYWkTjPPdDrYX3we2aBrewuEM3"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetPrivKey() test 4\n", __func__);
     
     // compressed private key export
-    char privKey2[BRKeyPrivKey(&key, NULL, 0)];
+    char privKey2[LWKeyPrivKey(&key, NULL, 0)];
     
-    BRKeyPrivKey(&key, privKey2, sizeof(privKey2));
+    LWKeyPrivKey(&key, privKey2, sizeof(privKey2));
     printf("privKey:%s\n", privKey2);
     if (strcmp(privKey2, "KyvGbxRUoofdw3TNydWn2Z78dBHSy2odn1d3wXWN2o3SAtccFNJL") != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyPrivKey() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyPrivKey() test 2\n", __func__);
 #endif
     
     // signing
-    BRKeySetSecret(&key, &uint256("0000000000000000000000000000000000000000000000000000000000000001"), 1);
+    LWKeySetSecret(&key, &uint256("0000000000000000000000000000000000000000000000000000000000000001"), 1);
     msg = "Everything should be made as simple as possible, but not simpler.";
-    BRSHA256(&md, msg, strlen(msg));
-    sigLen = BRKeySign(&key, sig, sizeof(sig), md);
+    LWSHA256(&md, msg, strlen(msg));
+    sigLen = LWKeySign(&key, sig, sizeof(sig), md);
     
     char sig1[] = "\x30\x44\x02\x20\x33\xa6\x9c\xd2\x06\x54\x32\xa3\x0f\x3d\x1c\xe4\xeb\x0d\x59\xb8\xab\x58\xc7\x4f\x27"
     "\xc4\x1a\x7f\xdb\x56\x96\xad\x4e\x61\x08\xc9\x02\x20\x6f\x80\x79\x82\x86\x6f\x78\x5d\x3f\x64\x18\xd2\x41\x63\xdd"
     "\xae\x11\x7b\x7d\xb4\xd5\xfd\xf0\x07\x1d\xe0\x69\xfa\x54\x34\x22\x62";
 
     if (sigLen != sizeof(sig1) - 1 || memcmp(sig, sig1, sigLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySign() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySign() test 1\n", __func__);
 
-    if (! BRKeyVerify(&key, md, sig, sigLen))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyVerify() test 1\n", __func__);
+    if (! LWKeyVerify(&key, md, sig, sigLen))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyVerify() test 1\n", __func__);
 
-    BRKeySetSecret(&key, &uint256("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140"), 1);
+    LWKeySetSecret(&key, &uint256("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140"), 1);
     msg = "Equations are more important to me, because politics is for the present, but an equation is something for "
     "eternity.";
-    BRSHA256(&md, msg, strlen(msg));
-    sigLen = BRKeySign(&key, sig, sizeof(sig), md);
+    LWSHA256(&md, msg, strlen(msg));
+    sigLen = LWKeySign(&key, sig, sizeof(sig), md);
     
     char sig2[] = "\x30\x44\x02\x20\x54\xc4\xa3\x3c\x64\x23\xd6\x89\x37\x8f\x16\x0a\x7f\xf8\xb6\x13\x30\x44\x4a\xbb\x58"
     "\xfb\x47\x0f\x96\xea\x16\xd9\x9d\x4a\x2f\xed\x02\x20\x07\x08\x23\x04\x41\x0e\xfa\x6b\x29\x43\x11\x1b\x6a\x4e\x0a"
     "\xaa\x7b\x7d\xb5\x5a\x07\xe9\x86\x1d\x1f\xb3\xcb\x1f\x42\x10\x44\xa5";
 
     if (sigLen != sizeof(sig2) - 1 || memcmp(sig, sig2, sigLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySign() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySign() test 2\n", __func__);
     
-    if (! BRKeyVerify(&key, md, sig, sigLen))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyVerify() test 2\n", __func__);
+    if (! LWKeyVerify(&key, md, sig, sigLen))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyVerify() test 2\n", __func__);
 
-    BRKeySetSecret(&key, &uint256("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140"), 1);
+    LWKeySetSecret(&key, &uint256("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140"), 1);
     msg = "Not only is the Universe stranger than we think, it is stranger than we can think.";
-    BRSHA256(&md, msg, strlen(msg));
-    sigLen = BRKeySign(&key, sig, sizeof(sig), md);
+    LWSHA256(&md, msg, strlen(msg));
+    sigLen = LWKeySign(&key, sig, sizeof(sig), md);
     
     char sig3[] = "\x30\x45\x02\x21\x00\xff\x46\x6a\x9f\x1b\x7b\x27\x3e\x2f\x4c\x3f\xfe\x03\x2e\xb2\xe8\x14\x12\x1e\xd1"
     "\x8e\xf8\x46\x65\xd0\xf5\x15\x36\x0d\xab\x3d\xd0\x02\x20\x6f\xc9\x5f\x51\x32\xe5\xec\xfd\xc8\xe5\xe6\xe6\x16\xcc"
     "\x77\x15\x14\x55\xd4\x6e\xd4\x8f\x55\x89\xb7\xdb\x77\x71\xa3\x32\xb2\x83";
     
     if (sigLen != sizeof(sig3) - 1 || memcmp(sig, sig3, sigLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySign() test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySign() test 3\n", __func__);
     
-    if (! BRKeyVerify(&key, md, sig, sigLen))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyVerify() test 3\n", __func__);
+    if (! LWKeyVerify(&key, md, sig, sigLen))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyVerify() test 3\n", __func__);
 
-    BRKeySetSecret(&key, &uint256("0000000000000000000000000000000000000000000000000000000000000001"), 1);
+    LWKeySetSecret(&key, &uint256("0000000000000000000000000000000000000000000000000000000000000001"), 1);
     msg = "How wonderful that we have met with a paradox. Now we have some hope of making progress.";
-    BRSHA256(&md, msg, strlen(msg));
-    sigLen = BRKeySign(&key, sig, sizeof(sig), md);
+    LWSHA256(&md, msg, strlen(msg));
+    sigLen = LWKeySign(&key, sig, sizeof(sig), md);
     
     char sig4[] = "\x30\x45\x02\x21\x00\xc0\xda\xfe\xc8\x25\x1f\x1d\x50\x10\x28\x9d\x21\x02\x32\x22\x0b\x03\x20\x2c\xba"
     "\x34\xec\x11\xfe\xc5\x8b\x3e\x93\xa8\x5b\x91\xd3\x02\x20\x75\xaf\xdc\x06\xb7\xd6\x32\x2a\x59\x09\x55\xbf\x26\x4e"
     "\x7a\xaa\x15\x58\x47\xf6\x14\xd8\x00\x78\xa9\x02\x92\xfe\x20\x50\x64\xd3";
     
     if (sigLen != sizeof(sig4) - 1 || memcmp(sig, sig4, sigLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySign() test 4\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySign() test 4\n", __func__);
     
-    if (! BRKeyVerify(&key, md, sig, sigLen))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyVerify() test 4\n", __func__);
+    if (! LWKeyVerify(&key, md, sig, sigLen))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyVerify() test 4\n", __func__);
 
-    BRKeySetSecret(&key, &uint256("69ec59eaa1f4f2e36b639716b7c30ca86d9a5375c7b38d8918bd9c0ebc80ba64"), 1);
+    LWKeySetSecret(&key, &uint256("69ec59eaa1f4f2e36b639716b7c30ca86d9a5375c7b38d8918bd9c0ebc80ba64"), 1);
     msg = "Computer science is no more about computers than astronomy is about telescopes.";
-    BRSHA256(&md, msg, strlen(msg));
-    sigLen = BRKeySign(&key, sig, sizeof(sig), md);
+    LWSHA256(&md, msg, strlen(msg));
+    sigLen = LWKeySign(&key, sig, sizeof(sig), md);
     
     char sig5[] = "\x30\x44\x02\x20\x71\x86\x36\x35\x71\xd6\x5e\x08\x4e\x7f\x02\xb0\xb7\x7c\x3e\xc4\x4f\xb1\xb2\x57\xde"
     "\xe2\x62\x74\xc3\x8c\x92\x89\x86\xfe\xa4\x5d\x02\x20\x0d\xe0\xb3\x8e\x06\x80\x7e\x46\xbd\xa1\xf1\xe2\x93\xf4\xf6"
     "\x32\x3e\x85\x4c\x86\xd5\x8a\xbd\xd0\x0c\x46\xc1\x64\x41\x08\x5d\xf6";
     
     if (sigLen != sizeof(sig5) - 1 || memcmp(sig, sig5, sigLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySign() test 5\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySign() test 5\n", __func__);
     
-    if (! BRKeyVerify(&key, md, sig, sigLen))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyVerify() test 5\n", __func__);
+    if (! LWKeyVerify(&key, md, sig, sigLen))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyVerify() test 5\n", __func__);
 
-    BRKeySetSecret(&key, &uint256("00000000000000000000000000007246174ab1e92e9149c6e446fe194d072637"), 1);
+    LWKeySetSecret(&key, &uint256("00000000000000000000000000007246174ab1e92e9149c6e446fe194d072637"), 1);
     msg = "...if you aren't, at any given time, scandalized by code you wrote five or even three years ago, you're not"
     " learning anywhere near enough";
-    BRSHA256(&md, msg, strlen(msg));
-    sigLen = BRKeySign(&key, sig, sizeof(sig), md);
+    LWSHA256(&md, msg, strlen(msg));
+    sigLen = LWKeySign(&key, sig, sizeof(sig), md);
     
     char sig6[] = "\x30\x45\x02\x21\x00\xfb\xfe\x50\x76\xa1\x58\x60\xba\x8e\xd0\x0e\x75\xe9\xbd\x22\xe0\x5d\x23\x0f\x02"
     "\xa9\x36\xb6\x53\xeb\x55\xb6\x1c\x99\xdd\xa4\x87\x02\x20\x0e\x68\x88\x0e\xbb\x00\x50\xfe\x43\x12\xb1\xb1\xeb\x08"
     "\x99\xe1\xb8\x2d\xa8\x9b\xaa\x5b\x89\x5f\x61\x26\x19\xed\xf3\x4c\xbd\x37";
     
     if (sigLen != sizeof(sig6) - 1 || memcmp(sig, sig6, sigLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySign() test 6\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySign() test 6\n", __func__);
     
-    if (! BRKeyVerify(&key, md, sig, sigLen))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyVerify() test 6\n", __func__);
+    if (! LWKeyVerify(&key, md, sig, sigLen))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyVerify() test 6\n", __func__);
 
-    BRKeySetSecret(&key, &uint256("000000000000000000000000000000000000000000056916d0f9b31dc9b637f3"), 1);
+    LWKeySetSecret(&key, &uint256("000000000000000000000000000000000000000000056916d0f9b31dc9b637f3"), 1);
     msg = "The question of whether computers can think is like the question of whether submarines can swim.";
-    BRSHA256(&md, msg, strlen(msg));
-    sigLen = BRKeySign(&key, sig, sizeof(sig), md);
+    LWSHA256(&md, msg, strlen(msg));
+    sigLen = LWKeySign(&key, sig, sizeof(sig), md);
     
     char sig7[] = "\x30\x45\x02\x21\x00\xcd\xe1\x30\x2d\x83\xf8\xdd\x83\x5d\x89\xae\xf8\x03\xc7\x4a\x11\x9f\x56\x1f\xba"
     "\xef\x3e\xb9\x12\x9e\x45\xf3\x0d\xe8\x6a\xbb\xf9\x02\x20\x06\xce\x64\x3f\x50\x49\xee\x1f\x27\x89\x04\x67\xb7\x7a"
     "\x6a\x8e\x11\xec\x46\x61\xcc\x38\xcd\x8b\xad\xf9\x01\x15\xfb\xd0\x3c\xef";
     
     if (sigLen != sizeof(sig7) - 1 || memcmp(sig, sig7, sigLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySign() test 7\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySign() test 7\n", __func__);
     
-    if (! BRKeyVerify(&key, md, sig, sigLen))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyVerify() test 7\n", __func__);
+    if (! LWKeyVerify(&key, md, sig, sigLen))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyVerify() test 7\n", __func__);
 
     // compact signing
-    BRKeySetSecret(&key, &uint256("0000000000000000000000000000000000000000000000000000000000000001"), 1);
+    LWKeySetSecret(&key, &uint256("0000000000000000000000000000000000000000000000000000000000000001"), 1);
     msg = "foo";
-    BRSHA256(&md, msg, strlen(msg));
-    sigLen = BRKeyCompactSign(&key, sig, sizeof(sig), md);
-    BRKeyRecoverPubKey(&key2, md, sig, sigLen);
-    pkLen = BRKeyPubKey(&key2, pubKey, sizeof(pubKey));
+    LWSHA256(&md, msg, strlen(msg));
+    sigLen = LWKeyCompactSign(&key, sig, sizeof(sig), md);
+    LWKeyRecoverPubKey(&key2, md, sig, sigLen);
+    pkLen = LWKeyPubKey(&key2, pubKey, sizeof(pubKey));
     
-    uint8_t pubKey1[BRKeyPubKey(&key, NULL, 0)];
-    size_t pkLen1 = BRKeyPubKey(&key, pubKey1, sizeof(pubKey1));
+    uint8_t pubKey1[LWKeyPubKey(&key, NULL, 0)];
+    size_t pkLen1 = LWKeyPubKey(&key, pubKey1, sizeof(pubKey1));
     
     if (pkLen1 != pkLen || memcmp(pubKey, pubKey1, pkLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyCompactSign() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyCompactSign() test 1\n", __func__);
 
-    BRKeySetSecret(&key, &uint256("0000000000000000000000000000000000000000000000000000000000000001"), 0);
+    LWKeySetSecret(&key, &uint256("0000000000000000000000000000000000000000000000000000000000000001"), 0);
     msg = "foo";
-    BRSHA256(&md, msg, strlen(msg));
-    sigLen = BRKeyCompactSign(&key, sig, sizeof(sig), md);
-    BRKeyRecoverPubKey(&key2, md, sig, sigLen);
-    pkLen = BRKeyPubKey(&key2, pubKey, sizeof(pubKey));
+    LWSHA256(&md, msg, strlen(msg));
+    sigLen = LWKeyCompactSign(&key, sig, sizeof(sig), md);
+    LWKeyRecoverPubKey(&key2, md, sig, sigLen);
+    pkLen = LWKeyPubKey(&key2, pubKey, sizeof(pubKey));
     
-    uint8_t pubKey2[BRKeyPubKey(&key, NULL, 0)];
-    size_t pkLen2 = BRKeyPubKey(&key, pubKey2, sizeof(pubKey2));
+    uint8_t pubKey2[LWKeyPubKey(&key, NULL, 0)];
+    size_t pkLen2 = LWKeyPubKey(&key, pubKey2, sizeof(pubKey2));
     
     if (pkLen2 != pkLen || memcmp(pubKey, pubKey2, pkLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyCompactSign() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyCompactSign() test 2\n", __func__);
 
     // compact pubkey recovery
-    pkLen = BRBase58Decode(pubKey, sizeof(pubKey), "26wZYDdvpmCrYZeUcxgqd1KquN4o6wXwLomBW5SjnwUqG");
+    pkLen = LWBase58Decode(pubKey, sizeof(pubKey), "26wZYDdvpmCrYZeUcxgqd1KquN4o6wXwLomBW5SjnwUqG");
     msg = "i am a test signed string";
-    BRSHA256_2(&md, msg, strlen(msg));
-    sigLen = BRBase58Decode(sig, sizeof(sig),
+    LWSHA256_2(&md, msg, strlen(msg));
+    sigLen = LWBase58Decode(sig, sizeof(sig),
                            "3kq9e842BzkMfbPSbhKVwGZgspDSkz4YfqjdBYQPWDzqd77gPgR1zq4XG7KtAL5DZTcfFFs2iph4urNyXeBkXsEYY");
-    BRKeyRecoverPubKey(&key2, md, sig, sigLen);
-    uint8_t pubKey3[BRKeyPubKey(&key2, NULL, 0)];
-    size_t pkLen3 = BRKeyPubKey(&key2, pubKey3, sizeof(pubKey3));
+    LWKeyRecoverPubKey(&key2, md, sig, sigLen);
+    uint8_t pubKey3[LWKeyPubKey(&key2, NULL, 0)];
+    size_t pkLen3 = LWKeyPubKey(&key2, pubKey3, sizeof(pubKey3));
 
     if (pkLen3 != pkLen || memcmp(pubKey, pubKey3, pkLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPubKeyRecover() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s:  LWPubKeyRecover() test 1\n", __func__);
 
-    pkLen = BRBase58Decode(pubKey, sizeof(pubKey), "26wZYDdvpmCrYZeUcxgqd1KquN4o6wXwLomBW5SjnwUqG");
+    pkLen = LWBase58Decode(pubKey, sizeof(pubKey), "26wZYDdvpmCrYZeUcxgqd1KquN4o6wXwLomBW5SjnwUqG");
     msg = "i am a test signed string do de dah";
-    BRSHA256_2(&md, msg, strlen(msg));
-    sigLen = BRBase58Decode(sig, sizeof(sig),
+    LWSHA256_2(&md, msg, strlen(msg));
+    sigLen = LWBase58Decode(sig, sizeof(sig),
                            "3qECEYmb6x4X22sH98Aer68SdfrLwtqvb5Ncv7EqKmzbxeYYJ1hU9irP6R5PeCctCPYo5KQiWFgoJ3H5MkuX18gHu");
     
-    BRKeyRecoverPubKey(&key2, md, sig, sigLen);
-    uint8_t pubKey4[BRKeyPubKey(&key2, NULL, 0)];
-    size_t pkLen4 = BRKeyPubKey(&key2, pubKey4, sizeof(pubKey4));
+    LWKeyRecoverPubKey(&key2, md, sig, sigLen);
+    uint8_t pubKey4[LWKeyPubKey(&key2, NULL, 0)];
+    size_t pkLen4 = LWKeyPubKey(&key2, pubKey4, sizeof(pubKey4));
     
     if (pkLen4 != pkLen || memcmp(pubKey, pubKey4, pkLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPubKeyRecover() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s:  LWPubKeyRecover() test 2\n", __func__);
 
-    pkLen = BRBase58Decode(pubKey, sizeof(pubKey), "gpRv1sNA3XURB6QEtGrx6Q18DZ5cSgUSDQKX4yYypxpW");
+    pkLen = LWBase58Decode(pubKey, sizeof(pubKey), "gpRv1sNA3XURB6QEtGrx6Q18DZ5cSgUSDQKX4yYypxpW");
     msg = "i am a test signed string";
-    BRSHA256_2(&md, msg, strlen(msg));
-    sigLen = BRBase58Decode(sig, sizeof(sig),
+    LWSHA256_2(&md, msg, strlen(msg));
+    sigLen = LWBase58Decode(sig, sizeof(sig),
                            "3oHQhxq5eW8dnp7DquTCbA5tECoNx7ubyiubw4kiFm7wXJF916SZVykFzb8rB1K6dEu7mLspBWbBEJyYk79jAosVR");
     
-    BRKeyRecoverPubKey(&key2, md, sig, sigLen);
-    uint8_t pubKey5[BRKeyPubKey(&key2, NULL, 0)];
-    size_t pkLen5 = BRKeyPubKey(&key2, pubKey5, sizeof(pubKey5));
+    LWKeyRecoverPubKey(&key2, md, sig, sigLen);
+    uint8_t pubKey5[LWKeyPubKey(&key2, NULL, 0)];
+    size_t pkLen5 = LWKeyPubKey(&key2, pubKey5, sizeof(pubKey5));
     
     if (pkLen5 != pkLen || memcmp(pubKey, pubKey5, pkLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPubKeyRecover() test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s:  LWPubKeyRecover() test 3\n", __func__);
 
     printf("                                    ");
     return r;
 }
 
-int BRBIP38KeyTests()
+int LWBIP38KeyTests()
 {
     int r = 1;
-    BRKey key;
+    LWKey key;
     char privKey[55], bip38Key[61];
     
     printf("\n");
 
     // non EC multiplied, uncompressed
-    if (! BRKeySetPrivKey(&key, "5KN7MzqK5wt2TP1fQCYyHBtDrXdJuXbUzm4A9rKAteGu3Qi5CVR") ||
-        ! BRKeyBIP38Key(&key, bip38Key, sizeof(bip38Key), "TestingOneTwoThree") ||
+    if (! LWKeySetPrivKey(&key, "5KN7MzqK5wt2TP1fQCYyHBtDrXdJuXbUzm4A9rKAteGu3Qi5CVR") ||
+        ! LWKeyBIP38Key(&key, bip38Key, sizeof(bip38Key), "TestingOneTwoThree") ||
         strncmp(bip38Key, "6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg", sizeof(bip38Key)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyBIP38Key() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyBIP38Key() test 1\n", __func__);
     
-    if (! BRKeySetBIP38Key(&key, "6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg", "TestingOneTwoThree") ||
-        ! BRKeyPrivKey(&key, privKey, sizeof(privKey)) ||
+    if (! LWKeySetBIP38Key(&key, "6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg", "TestingOneTwoThree") ||
+        ! LWKeyPrivKey(&key, privKey, sizeof(privKey)) ||
         strncmp(privKey, "5KN7MzqK5wt2TP1fQCYyHBtDrXdJuXbUzm4A9rKAteGu3Qi5CVR", sizeof(privKey)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetBIP38Key() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetBIP38Key() test 1\n", __func__);
 
     printf("privKey:%s\n", privKey);
 
-    if (! BRKeySetPrivKey(&key, "5HtasZ6ofTHP6HCwTqTkLDuLQisYPah7aUnSKfC7h4hMUVw2gi5") ||
-        ! BRKeyBIP38Key(&key, bip38Key, sizeof(bip38Key), "Satoshi") ||
+    if (! LWKeySetPrivKey(&key, "5HtasZ6ofTHP6HCwTqTkLDuLQisYPah7aUnSKfC7h4hMUVw2gi5") ||
+        ! LWKeyBIP38Key(&key, bip38Key, sizeof(bip38Key), "Satoshi") ||
         strncmp(bip38Key, "6PRNFFkZc2NZ6dJqFfhRoFNMR9Lnyj7dYGrzdgXXVMXcxoKTePPX1dWByq", sizeof(bip38Key)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyBIP38Key() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyBIP38Key() test 2\n", __func__);
 
-    if (! BRKeySetBIP38Key(&key, "6PRNFFkZc2NZ6dJqFfhRoFNMR9Lnyj7dYGrzdgXXVMXcxoKTePPX1dWByq", "Satoshi") ||
-        ! BRKeyPrivKey(&key, privKey, sizeof(privKey)) ||
+    if (! LWKeySetBIP38Key(&key, "6PRNFFkZc2NZ6dJqFfhRoFNMR9Lnyj7dYGrzdgXXVMXcxoKTePPX1dWByq", "Satoshi") ||
+        ! LWKeyPrivKey(&key, privKey, sizeof(privKey)) ||
         strncmp(privKey, "5HtasZ6ofTHP6HCwTqTkLDuLQisYPah7aUnSKfC7h4hMUVw2gi5", sizeof(privKey)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetBIP38Key() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetBIP38Key() test 2\n", __func__);
 
     printf("privKey:%s\n", privKey);
     
     // non EC multiplied, compressed
-    if (! BRKeySetPrivKey(&key, "L44B5gGEpqEDRS9vVPz7QT35jcBG2r3CZwSwQ4fCewXAhAhqGVpP") ||
-        ! BRKeyBIP38Key(&key, bip38Key, sizeof(bip38Key), "TestingOneTwoThree") ||
+    if (! LWKeySetPrivKey(&key, "L44B5gGEpqEDRS9vVPz7QT35jcBG2r3CZwSwQ4fCewXAhAhqGVpP") ||
+        ! LWKeyBIP38Key(&key, bip38Key, sizeof(bip38Key), "TestingOneTwoThree") ||
         strncmp(bip38Key, "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5s6DGhwP4J5o44cvXdoY7sRzhtpUeo", sizeof(bip38Key)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyBIP38Key() test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyBIP38Key() test 3\n", __func__);
 
-    if (! BRKeySetBIP38Key(&key, "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5s6DGhwP4J5o44cvXdoY7sRzhtpUeo", "TestingOneTwoThree") ||
-        ! BRKeyPrivKey(&key, privKey, sizeof(privKey)) ||
+    if (! LWKeySetBIP38Key(&key, "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5s6DGhwP4J5o44cvXdoY7sRzhtpUeo", "TestingOneTwoThree") ||
+        ! LWKeyPrivKey(&key, privKey, sizeof(privKey)) ||
         strncmp(privKey, "L44B5gGEpqEDRS9vVPz7QT35jcBG2r3CZwSwQ4fCewXAhAhqGVpP", sizeof(privKey)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetBIP38Key() test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetBIP38Key() test 3\n", __func__);
 
     printf("privKey:%s\n", privKey);
 
-    if (! BRKeySetPrivKey(&key, "KwYgW8gcxj1JWJXhPSu4Fqwzfhp5Yfi42mdYmMa4XqK7NJxXUSK7") ||
-        ! BRKeyBIP38Key(&key, bip38Key, sizeof(bip38Key), "Satoshi") ||
+    if (! LWKeySetPrivKey(&key, "KwYgW8gcxj1JWJXhPSu4Fqwzfhp5Yfi42mdYmMa4XqK7NJxXUSK7") ||
+        ! LWKeyBIP38Key(&key, bip38Key, sizeof(bip38Key), "Satoshi") ||
         strncmp(bip38Key, "6PYLtMnXvfG3oJde97zRyLYFZCYizPU5T3LwgdYJz1fRhh16bU7u6PPmY7", sizeof(bip38Key)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeyBIP38Key() test 4\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeyBIP38Key() test 4\n", __func__);
 
-    if (! BRKeySetBIP38Key(&key, "6PYLtMnXvfG3oJde97zRyLYFZCYizPU5T3LwgdYJz1fRhh16bU7u6PPmY7", "Satoshi") ||
-        ! BRKeyPrivKey(&key, privKey, sizeof(privKey)) ||
+    if (! LWKeySetBIP38Key(&key, "6PYLtMnXvfG3oJde97zRyLYFZCYizPU5T3LwgdYJz1fRhh16bU7u6PPmY7", "Satoshi") ||
+        ! LWKeyPrivKey(&key, privKey, sizeof(privKey)) ||
         strncmp(privKey, "KwYgW8gcxj1JWJXhPSu4Fqwzfhp5Yfi42mdYmMa4XqK7NJxXUSK7", sizeof(privKey)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetBIP38Key() test 4\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetBIP38Key() test 4\n", __func__);
 
     printf("privKey:%s\n", privKey);
 
     // EC multiplied, uncompressed, no lot/sequence number
-    if (! BRKeySetBIP38Key(&key, "6PfQu77ygVyJLZjfvMLyhLMQbYnu5uguoJJ4kMCLqWwPEdfpwANVS76gTX", "TestingOneTwoThree") ||
-        ! BRKeyPrivKey(&key, privKey, sizeof(privKey)) ||
+    if (! LWKeySetBIP38Key(&key, "6PfQu77ygVyJLZjfvMLyhLMQbYnu5uguoJJ4kMCLqWwPEdfpwANVS76gTX", "TestingOneTwoThree") ||
+        ! LWKeyPrivKey(&key, privKey, sizeof(privKey)) ||
         strncmp(privKey, "5K4caxezwjGCGfnoPTZ8tMcJBLB7Jvyjv4xxeacadhq8nLisLR2", sizeof(privKey)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetBIP38Key() test 5\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetBIP38Key() test 5\n", __func__);
 
     printf("privKey:%s\n", privKey);
 
-    if (! BRKeySetBIP38Key(&key, "6PfLGnQs6VZnrNpmVKfjotbnQuaJK4KZoPFrAjx1JMJUa1Ft8gnf5WxfKd", "Satoshi") ||
-        ! BRKeyPrivKey(&key, privKey, sizeof(privKey)) ||
+    if (! LWKeySetBIP38Key(&key, "6PfLGnQs6VZnrNpmVKfjotbnQuaJK4KZoPFrAjx1JMJUa1Ft8gnf5WxfKd", "Satoshi") ||
+        ! LWKeyPrivKey(&key, privKey, sizeof(privKey)) ||
         strncmp(privKey, "5KJ51SgxWaAYR13zd9ReMhJpwrcX47xTJh2D3fGPG9CM8vkv5sH", sizeof(privKey)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetBIP38Key() test 6\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetBIP38Key() test 6\n", __func__);
 
     printf("privKey:%s\n", privKey);
     
     // EC multiplied, uncompressed, with lot/sequence number
-    if (! BRKeySetBIP38Key(&key, "6PgNBNNzDkKdhkT6uJntUXwwzQV8Rr2tZcbkDcuC9DZRsS6AtHts4Ypo1j", "MOLON LABE") ||
-        ! BRKeyPrivKey(&key, privKey, sizeof(privKey)) ||
+    if (! LWKeySetBIP38Key(&key, "6PgNBNNzDkKdhkT6uJntUXwwzQV8Rr2tZcbkDcuC9DZRsS6AtHts4Ypo1j", "MOLON LABE") ||
+        ! LWKeyPrivKey(&key, privKey, sizeof(privKey)) ||
         strncmp(privKey, "5JLdxTtcTHcfYcmJsNVy1v2PMDx432JPoYcBTVVRHpPaxUrdtf8", sizeof(privKey)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetBIP38Key() test 7\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetBIP38Key() test 7\n", __func__);
 
     printf("privKey:%s\n", privKey);
 
-    if (! BRKeySetBIP38Key(&key, "6PgGWtx25kUg8QWvwuJAgorN6k9FbE25rv5dMRwu5SKMnfpfVe5mar2ngH",
+    if (! LWKeySetBIP38Key(&key, "6PgGWtx25kUg8QWvwuJAgorN6k9FbE25rv5dMRwu5SKMnfpfVe5mar2ngH",
                            "\u039c\u039f\u039b\u03a9\u039d \u039b\u0391\u0392\u0395") ||
-        ! BRKeyPrivKey(&key, privKey, sizeof(privKey)) ||
+        ! LWKeyPrivKey(&key, privKey, sizeof(privKey)) ||
         strncmp(privKey, "5KMKKuUmAkiNbA3DazMQiLfDq47qs8MAEThm4yL8R2PhV1ov33D", sizeof(privKey)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetBIP38Key() test 8\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetBIP38Key() test 8\n", __func__);
 
     printf("privKey:%s\n", privKey);
-    
-//    // password NFC unicode normalization test
-//    if (! BRKeySetBIP38Key(&key, "6PRW5o9FLp4gJDDVqJQKJFTpMvdsSGJxMYHtHaQBF3ooa8mwD69bapcDQn",
-//                           "\u03D2\u0301\0\U00010400\U0001F4A9") ||
-//        ! BRKeyPrivKey(&key, privKey, sizeof(privKey)) ||
-//        strncmp(privKey, "5Jajm8eQ22H3pGWLEVCXyvND8dQZhiQhoLJNKjYXk9roUFTMSZ4", sizeof(privKey)) != 0)
-//        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetBIP38Key() test 9\n", __func__);
-//
-//    printf("privKey:%s\n", privKey);
 
     // incorrect password test
-    if (BRKeySetBIP38Key(&key, "6PRW5o9FLp4gJDDVqJQKJFTpMvdsSGJxMYHtHaQBF3ooa8mwD69bapcDQn", "foobar"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRKeySetBIP38Key() test 10\n", __func__);
+    if (LWKeySetBIP38Key(&key, "6PRW5o9FLp4gJDDVqJQKJFTpMvdsSGJxMYHtHaQBF3ooa8mwD69bapcDQn", "foobar"))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWKeySetBIP38Key() test 10\n", __func__);
 
     printf("                                    ");
     return r;
 }
 
-int BRAddressTests()
+int LWAddressTests()
 {
     int r = 1;
     UInt256 secret = uint256("0000000000000000000000000000000000000000000000000000000000000001");
-    BRKey k;
-    BRAddress addr, addr2;
+    LWKey k;
+    LWAddress addr, addr2;
     
-    BRKeySetSecret(&k, &secret, 1);
-    if (! BRKeyAddress(&k, addr.s, sizeof(addr)))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRKeyAddress()", __func__);
+    LWKeySetSecret(&k, &secret, 1);
+    if (! LWKeyAddress(&k, addr.s, sizeof(addr)))
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWKeyAddress()", __func__);
 
-    uint8_t script[BRAddressScriptPubKey(NULL, 0, addr.s)];
-    size_t scriptLen = BRAddressScriptPubKey(script, sizeof(script), addr.s);
+    uint8_t script[LWAddressScriptPubKey(NULL, 0, addr.s)];
+    size_t scriptLen = LWAddressScriptPubKey(script, sizeof(script), addr.s);
     
-    BRAddressFromScriptPubKey(addr2.s, sizeof(addr2), script, scriptLen);
-    if (! BRAddressEq(&addr, &addr2))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRAddressFromScriptPubKey() test 1", __func__);
+    LWAddressFromScriptPubKey(addr2.s, sizeof(addr2), script, scriptLen);
+    if (! LWAddressEq(&addr, &addr2))
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWAddressFromScriptPubKey() test 1", __func__);
     
-    // TODO: test BRAddressFromScriptSig()
+    // TODO: test LWAddressFromScriptSig()
     
-    BRAddress addr3;
+    LWAddress addr3;
     char script2[] = "\0\x14\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-    if (! BRAddressFromScriptPubKey(addr3.s, sizeof(addr3), (uint8_t *)script2, sizeof(script2)))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRAddressFromScriptPubKey() test 2", __func__);
+    if (! LWAddressFromScriptPubKey(addr3.s, sizeof(addr3), (uint8_t *)script2, sizeof(script2)))
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWAddressFromScriptPubKey() test 2", __func__);
 
-    uint8_t script3[BRAddressScriptPubKey(NULL, 0, addr3.s)];
-    size_t script3Len = BRAddressScriptPubKey(script3, sizeof(script3), addr3.s);
+    uint8_t script3[LWAddressScriptPubKey(NULL, 0, addr3.s)];
+    size_t script3Len = LWAddressScriptPubKey(script3, sizeof(script3), addr3.s);
 
     if (script3Len != sizeof(script2) || memcmp(script2, script3, sizeof(script2)))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRAddressScriptPubKey() test", __func__);
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWAddressScriptPubKey() test", __func__);
 
     if (! r) fprintf(stderr, "\n                                    ");
     return r;
 }
 
-int BRBIP39MnemonicTests()
+int LWBIP39MnemonicTests()
 {
     int r = 1;
     
     const char *s = "bless cloud wheel regular tiny venue bird web grief security dignity zoo";
 
     // test correct handling of bad checksum
-    if (BRBIP39PhraseIsValid(BRBIP39WordsEn, s))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39PhraseIsValid() test\n", __func__);
+    if (LWBIP39PhraseIsValid(LWBIP39WordsEn, s))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39PhraseIsValid() test\n", __func__);
 
     UInt512 key = UINT512_ZERO;
 
-//    BRBIP39DeriveKey(key.u8, NULL, NULL); // test invalid key
-//    if (! UInt512IsZero(key)) r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39DeriveKey() test 0\n", __func__);
+//    LWBIP39DeriveKey(key.u8, NULL, NULL); // test invalid key
+//    if (! UInt512IsZero(key)) r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39DeriveKey() test 0\n", __func__);
 
     UInt128 entropy = UINT128_ZERO;
-    char phrase[BRBIP39Encode(NULL, 0, BRBIP39WordsEn, entropy.u8, sizeof(entropy))];
-    size_t len = BRBIP39Encode(phrase, sizeof(phrase), BRBIP39WordsEn, entropy.u8, sizeof(entropy));
+    char phrase[LWBIP39Encode(NULL, 0, LWBIP39WordsEn, entropy.u8, sizeof(entropy))];
+    size_t len = LWBIP39Encode(phrase, sizeof(phrase), LWBIP39WordsEn, entropy.u8, sizeof(entropy));
     
     if (strncmp(phrase, "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
-                len)) r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Encode() test 1\n", __func__);
+                len)) r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Encode() test 1\n", __func__);
     
-    BRBIP39Decode(entropy.u8, sizeof(entropy), BRBIP39WordsEn, phrase);
-    if (! UInt128IsZero(entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Decode() test 1\n", __func__);
+    LWBIP39Decode(entropy.u8, sizeof(entropy), LWBIP39WordsEn, phrase);
+    if (! UInt128IsZero(entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Decode() test 1\n", __func__);
     
-    BRBIP39DeriveKey(key.u8, phrase, "TREZOR");
+    LWBIP39DeriveKey(key.u8, phrase, "TREZOR");
     if (! UInt512Eq(key, *(UInt512 *)"\xc5\x52\x57\xc3\x60\xc0\x7c\x72\x02\x9a\xeb\xc1\xb5\x3c\x05\xed\x03\x62\xad\xa3"
                     "\x8e\xad\x3e\x3e\x9e\xfa\x37\x08\xe5\x34\x95\x53\x1f\x09\xa6\x98\x75\x99\xd1\x82\x64\xc1\xe1\xc9"
                     "\x2f\x2c\xf1\x41\x63\x0c\x7a\x3c\x4a\xb7\xc8\x1b\x2f\x00\x16\x98\xe7\x46\x3b\x04"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39DeriveKey() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39DeriveKey() test 1\n", __func__);
 
     UInt128 entropy2 = *(UInt128 *)"\x7f\x7f\x7f\x7f\x7f\x7f\x7f\x7f\x7f\x7f\x7f\x7f\x7f\x7f\x7f\x7f";
-    char phrase2[BRBIP39Encode(NULL, 0, BRBIP39WordsEn, entropy2.u8, sizeof(entropy2))];
-    size_t len2 = BRBIP39Encode(phrase2, sizeof(phrase2), BRBIP39WordsEn, entropy2.u8, sizeof(entropy2));
+    char phrase2[LWBIP39Encode(NULL, 0, LWBIP39WordsEn, entropy2.u8, sizeof(entropy2))];
+    size_t len2 = LWBIP39Encode(phrase2, sizeof(phrase2), LWBIP39WordsEn, entropy2.u8, sizeof(entropy2));
     
     if (strncmp(phrase2, "legal winner thank year wave sausage worth useful legal winner thank yellow", len2))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Encode() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Encode() test 2\n", __func__);
 
-    BRBIP39Decode(entropy.u8, sizeof(entropy), BRBIP39WordsEn, phrase2);
-    if (! UInt128Eq(entropy2, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Decode() test 2\n", __func__);
+    LWBIP39Decode(entropy.u8, sizeof(entropy), LWBIP39WordsEn, phrase2);
+    if (! UInt128Eq(entropy2, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Decode() test 2\n", __func__);
     
-    BRBIP39DeriveKey(key.u8, phrase2, "TREZOR");
+    LWBIP39DeriveKey(key.u8, phrase2, "TREZOR");
     if (! UInt512Eq(key, *(UInt512 *)"\x2e\x89\x05\x81\x9b\x87\x23\xfe\x2c\x1d\x16\x18\x60\xe5\xee\x18\x30\x31\x8d\xbf"
                     "\x49\xa8\x3b\xd4\x51\xcf\xb8\x44\x0c\x28\xbd\x6f\xa4\x57\xfe\x12\x96\x10\x65\x59\xa3\xc8\x09\x37"
                     "\xa1\xc1\x06\x9b\xe3\xa3\xa5\xbd\x38\x1e\xe6\x26\x0e\x8d\x97\x39\xfc\xe1\xf6\x07"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39DeriveKey() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39DeriveKey() test 2\n", __func__);
 
     UInt128 entropy3 = *(UInt128 *)"\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80";
-    char phrase3[BRBIP39Encode(NULL, 0, BRBIP39WordsEn, entropy3.u8, sizeof(entropy3))];
-    size_t len3 = BRBIP39Encode(phrase3, sizeof(phrase3), BRBIP39WordsEn, entropy3.u8, sizeof(entropy3));
+    char phrase3[LWBIP39Encode(NULL, 0, LWBIP39WordsEn, entropy3.u8, sizeof(entropy3))];
+    size_t len3 = LWBIP39Encode(phrase3, sizeof(phrase3), LWBIP39WordsEn, entropy3.u8, sizeof(entropy3));
     
     if (strncmp(phrase3, "letter advice cage absurd amount doctor acoustic avoid letter advice cage above",
-                len3)) r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Encode() test 3\n", __func__);
+                len3)) r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Encode() test 3\n", __func__);
     
-    BRBIP39Decode(entropy.u8, sizeof(entropy), BRBIP39WordsEn, phrase3);
-    if (! UInt128Eq(entropy3, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Decode() test 3\n", __func__);
+    LWBIP39Decode(entropy.u8, sizeof(entropy), LWBIP39WordsEn, phrase3);
+    if (! UInt128Eq(entropy3, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Decode() test 3\n", __func__);
     
-    BRBIP39DeriveKey(key.u8, phrase3, "TREZOR");
+    LWBIP39DeriveKey(key.u8, phrase3, "TREZOR");
     if (! UInt512Eq(key, *(UInt512 *)"\xd7\x1d\xe8\x56\xf8\x1a\x8a\xcc\x65\xe6\xfc\x85\x1a\x38\xd4\xd7\xec\x21\x6f\xd0"
                     "\x79\x6d\x0a\x68\x27\xa3\xad\x6e\xd5\x51\x1a\x30\xfa\x28\x0f\x12\xeb\x2e\x47\xed\x2a\xc0\x3b\x5c"
                     "\x46\x2a\x03\x58\xd1\x8d\x69\xfe\x4f\x98\x5e\xc8\x17\x78\xc1\xb3\x70\xb6\x52\xa8"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39DeriveKey() test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39DeriveKey() test 3\n", __func__);
 
     UInt128 entropy4 = *(UInt128 *)"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";
-    char phrase4[BRBIP39Encode(NULL, 0, BRBIP39WordsEn, entropy4.u8, sizeof(entropy4))];
-    size_t len4 = BRBIP39Encode(phrase4, sizeof(phrase4), BRBIP39WordsEn, entropy4.u8, sizeof(entropy4));
+    char phrase4[LWBIP39Encode(NULL, 0, LWBIP39WordsEn, entropy4.u8, sizeof(entropy4))];
+    size_t len4 = LWBIP39Encode(phrase4, sizeof(phrase4), LWBIP39WordsEn, entropy4.u8, sizeof(entropy4));
     
     if (strncmp(phrase4, "zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong", len4))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Encode() test 4\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Encode() test 4\n", __func__);
     
-    BRBIP39Decode(entropy.u8, sizeof(entropy), BRBIP39WordsEn, phrase4);
-    if (! UInt128Eq(entropy4, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Decode() test 4\n", __func__);
+    LWBIP39Decode(entropy.u8, sizeof(entropy), LWBIP39WordsEn, phrase4);
+    if (! UInt128Eq(entropy4, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Decode() test 4\n", __func__);
     
-    BRBIP39DeriveKey(key.u8, phrase4, "TREZOR");
+    LWBIP39DeriveKey(key.u8, phrase4, "TREZOR");
     if (! UInt512Eq(key, *(UInt512 *)"\xac\x27\x49\x54\x80\x22\x52\x22\x07\x9d\x7b\xe1\x81\x58\x37\x51\xe8\x6f\x57\x10"
                     "\x27\xb0\x49\x7b\x5b\x5d\x11\x21\x8e\x0a\x8a\x13\x33\x25\x72\x91\x7f\x0f\x8e\x5a\x58\x96\x20\xc6"
                     "\xf1\x5b\x11\xc6\x1d\xee\x32\x76\x51\xa1\x4c\x34\xe1\x82\x31\x05\x2e\x48\xc0\x69"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39DeriveKey() test 4\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39DeriveKey() test 4\n", __func__);
 
     UInt128 entropy5 = *(UInt128 *)"\x77\xc2\xb0\x07\x16\xce\xc7\x21\x38\x39\x15\x9e\x40\x4d\xb5\x0d";
-    char phrase5[BRBIP39Encode(NULL, 0, BRBIP39WordsEn, entropy5.u8, sizeof(entropy5))];
-    size_t len5 = BRBIP39Encode(phrase5, sizeof(phrase5), BRBIP39WordsEn, entropy5.u8, sizeof(entropy5));
+    char phrase5[LWBIP39Encode(NULL, 0, LWBIP39WordsEn, entropy5.u8, sizeof(entropy5))];
+    size_t len5 = LWBIP39Encode(phrase5, sizeof(phrase5), LWBIP39WordsEn, entropy5.u8, sizeof(entropy5));
     
     if (strncmp(phrase5, "jelly better achieve collect unaware mountain thought cargo oxygen act hood bridge",
-                len5)) r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Encode() test 5\n", __func__);
+                len5)) r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Encode() test 5\n", __func__);
     
-    BRBIP39Decode(entropy.u8, sizeof(entropy), BRBIP39WordsEn, phrase5);
-    if (! UInt128Eq(entropy5, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Decode() test 5\n", __func__);
+    LWBIP39Decode(entropy.u8, sizeof(entropy), LWBIP39WordsEn, phrase5);
+    if (! UInt128Eq(entropy5, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Decode() test 5\n", __func__);
     
-    BRBIP39DeriveKey(key.u8, phrase5, "TREZOR");
+    LWBIP39DeriveKey(key.u8, phrase5, "TREZOR");
     if (! UInt512Eq(key, *(UInt512 *)"\xb5\xb6\xd0\x12\x7d\xb1\xa9\xd2\x22\x6a\xf0\xc3\x34\x60\x31\xd7\x7a\xf3\x1e\x91"
                     "\x8d\xba\x64\x28\x7a\x1b\x44\xb8\xeb\xf6\x3c\xdd\x52\x67\x6f\x67\x2a\x29\x0a\xae\x50\x24\x72\xcf"
                     "\x2d\x60\x2c\x05\x1f\x3e\x6f\x18\x05\x5e\x84\xe4\xc4\x38\x97\xfc\x4e\x51\xa6\xff"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39DeriveKey() test 5\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39DeriveKey() test 5\n", __func__);
 
     UInt128 entropy6 = *(UInt128 *)"\x04\x60\xef\x47\x58\x56\x04\xc5\x66\x06\x18\xdb\x2e\x6a\x7e\x7f";
-    char phrase6[BRBIP39Encode(NULL, 0, BRBIP39WordsEn, entropy6.u8, sizeof(entropy6))];
-    size_t len6 = BRBIP39Encode(phrase6, sizeof(phrase6), BRBIP39WordsEn, entropy6.u8, sizeof(entropy6));
+    char phrase6[LWBIP39Encode(NULL, 0, LWBIP39WordsEn, entropy6.u8, sizeof(entropy6))];
+    size_t len6 = LWBIP39Encode(phrase6, sizeof(phrase6), LWBIP39WordsEn, entropy6.u8, sizeof(entropy6));
     
     if (strncmp(phrase6, "afford alter spike radar gate glance object seek swamp infant panel yellow", len6))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Encode() test 6\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Encode() test 6\n", __func__);
     
-    BRBIP39Decode(entropy.u8, sizeof(entropy), BRBIP39WordsEn, phrase6);
-    if (! UInt128Eq(entropy6, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Decode() test 6\n", __func__);
+    LWBIP39Decode(entropy.u8, sizeof(entropy), LWBIP39WordsEn, phrase6);
+    if (! UInt128Eq(entropy6, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Decode() test 6\n", __func__);
     
-    BRBIP39DeriveKey(key.u8, phrase6, "TREZOR");
+    LWBIP39DeriveKey(key.u8, phrase6, "TREZOR");
     if (! UInt512Eq(key, *(UInt512 *)"\x65\xf9\x3a\x9f\x36\xb6\xc8\x5c\xbe\x63\x4f\xfc\x1f\x99\xf2\xb8\x2c\xbb\x10\xb3"
                     "\x1e\xdc\x7f\x08\x7b\x4f\x6c\xb9\xe9\x76\xe9\xfa\xf7\x6f\xf4\x1f\x8f\x27\xc9\x9a\xfd\xf3\x8f\x7a"
                     "\x30\x3b\xa1\x13\x6e\xe4\x8a\x4c\x1e\x7f\xcd\x3d\xba\x7a\xa8\x76\x11\x3a\x36\xe4"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39DeriveKey() test 6\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39DeriveKey() test 6\n", __func__);
 
     UInt128 entropy7 = *(UInt128 *)"\xea\xeb\xab\xb2\x38\x33\x51\xfd\x31\xd7\x03\x84\x0b\x32\xe9\xe2";
-    char phrase7[BRBIP39Encode(NULL, 0, BRBIP39WordsEn, entropy7.u8, sizeof(entropy7))];
-    size_t len7 = BRBIP39Encode(phrase7, sizeof(phrase7), BRBIP39WordsEn, entropy7.u8, sizeof(entropy7));
+    char phrase7[LWBIP39Encode(NULL, 0, LWBIP39WordsEn, entropy7.u8, sizeof(entropy7))];
+    size_t len7 = LWBIP39Encode(phrase7, sizeof(phrase7), LWBIP39WordsEn, entropy7.u8, sizeof(entropy7));
     
     if (strncmp(phrase7, "turtle front uncle idea crush write shrug there lottery flower risk shell", len7))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Encode() test 7\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Encode() test 7\n", __func__);
     
-    BRBIP39Decode(entropy.u8, sizeof(entropy), BRBIP39WordsEn, phrase7);
-    if (! UInt128Eq(entropy7, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Decode() test 7\n", __func__);
+    LWBIP39Decode(entropy.u8, sizeof(entropy), LWBIP39WordsEn, phrase7);
+    if (! UInt128Eq(entropy7, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Decode() test 7\n", __func__);
     
-    BRBIP39DeriveKey(key.u8, phrase7, "TREZOR");
+    LWBIP39DeriveKey(key.u8, phrase7, "TREZOR");
     if (! UInt512Eq(key, *(UInt512 *)"\xbd\xfb\x76\xa0\x75\x9f\x30\x1b\x0b\x89\x9a\x1e\x39\x85\x22\x7e\x53\xb3\xf5\x1e"
                     "\x67\xe3\xf2\xa6\x53\x63\xca\xed\xf3\xe3\x2f\xde\x42\xa6\x6c\x40\x4f\x18\xd7\xb0\x58\x18\xc9\x5e"
                     "\xf3\xca\x1e\x51\x46\x64\x68\x56\xc4\x61\xc0\x73\x16\x94\x67\x51\x16\x80\x87\x6c"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39DeriveKey() test 7\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39DeriveKey() test 7\n", __func__);
 
     UInt128 entropy8 = *(UInt128 *)"\x18\xab\x19\xa9\xf5\x4a\x92\x74\xf0\x3e\x52\x09\xa2\xac\x8a\x91";
-    char phrase8[BRBIP39Encode(NULL, 0, BRBIP39WordsEn, entropy8.u8, sizeof(entropy8))];
-    size_t len8 = BRBIP39Encode(phrase8, sizeof(phrase8), BRBIP39WordsEn, entropy8.u8, sizeof(entropy8));
+    char phrase8[LWBIP39Encode(NULL, 0, LWBIP39WordsEn, entropy8.u8, sizeof(entropy8))];
+    size_t len8 = LWBIP39Encode(phrase8, sizeof(phrase8), LWBIP39WordsEn, entropy8.u8, sizeof(entropy8));
     
     if (strncmp(phrase8, "board flee heavy tunnel powder denial science ski answer betray cargo cat", len8))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Encode() test 8\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Encode() test 8\n", __func__);
     
-    BRBIP39Decode(entropy.u8, sizeof(entropy), BRBIP39WordsEn, phrase8);
-    if (! UInt128Eq(entropy8, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39Decode() test 8\n", __func__);
+    LWBIP39Decode(entropy.u8, sizeof(entropy), LWBIP39WordsEn, phrase8);
+    if (! UInt128Eq(entropy8, entropy)) r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39Decode() test 8\n", __func__);
     
-    BRBIP39DeriveKey(key.u8, phrase8, "TREZOR");
+    LWBIP39DeriveKey(key.u8, phrase8, "TREZOR");
     if (! UInt512Eq(key, *(UInt512 *)"\x6e\xff\x1b\xb2\x15\x62\x91\x85\x09\xc7\x3c\xb9\x90\x26\x0d\xb0\x7c\x0c\xe3\x4f"
                     "\xf0\xe3\xcc\x4a\x8c\xb3\x27\x61\x29\xfb\xcb\x30\x0b\xdd\xfe\x00\x58\x31\x35\x0e\xfd\x63\x39\x09"
                     "\xf4\x76\xc4\x5c\x88\x25\x32\x76\xd9\xfd\x0d\xf6\xef\x48\x60\x9e\x8b\xb7\xdc\xa8"))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP39DeriveKey() test 8\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP39DeriveKey() test 8\n", __func__);
 
     return r;
 }
 
-int BRBIP32SequenceTests()
+int LWBIP32SequenceTests()
 {
     int r = 1;
 
     UInt128 seed = *(UInt128 *)"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F";
-    BRKey key;
+    LWKey key;
 
     printf("\n");
 
-    BRBIP32PrivKey(&key, &seed, sizeof(seed), SEQUENCE_INTERNAL_CHAIN, 2 | 0x80000000);
+    LWBIP32PrivKey(&key, &seed, sizeof(seed), SEQUENCE_INTERNAL_CHAIN, 2 | 0x80000000);
     printf("000102030405060708090a0b0c0d0e0f/0H/1/2H prv = %s\n", u256hex(key.secret));
     if (! UInt256Eq(key.secret, uint256("cbce0d719ecf7431d88e6a89fa1483e02e35092af60c042b1df2ff59fa424dca")))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP32PrivKey() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP32PrivKey() test 1\n", __func__);
     
     // test for correct zero padding of private keys
-    BRBIP32PrivKey(&key, &seed, sizeof(seed), SEQUENCE_EXTERNAL_CHAIN, 97);
+    LWBIP32PrivKey(&key, &seed, sizeof(seed), SEQUENCE_EXTERNAL_CHAIN, 97);
     printf("000102030405060708090a0b0c0d0e0f/0H/0/97 prv = %s\n", u256hex(key.secret));
     if (! UInt256Eq(key.secret, uint256("00136c1ad038f9a00871895322a487ed14f1cdc4d22ad351cfa1a0d235975dd7")))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP32PrivKey() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP32PrivKey() test 2\n", __func__);
     
-    BRMasterPubKey mpk = BRBIP32MasterPubKey(&seed, sizeof(seed));
-    
-//    printf("000102030405060708090a0b0c0d0e0f/0H fp:%08x chain:%s pubkey:%02x%s\n", be32(mpk.fingerPrint),
-//           u256hex(mpk.chainCode), mpk.pubKey[0], u256hex(*(UInt256 *)&mpk.pubKey[1]));
-//    if (be32(mpk.fingerPrint) != 0x3442193e ||
-//        ! UInt256Eq(mpk.chainCode, uint256("47fdacbd0f1097043b78c63c20c34ef4ed9a111d980047ad16282c7ae6236141")) ||
-//        mpk.pubKey[0] != 0x03 ||
-//        ! UInt256Eq(*(UInt256 *)&mpk.pubKey[1],
-//                    uint256("5a784662a4a20a65bf6aab9ae98a6c068a81c52e4b032c0fb5400c706cfccc56")))
-//        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP32MasterPubKey() test\n", __func__);
+    LWMasterPubKey mpk = LWBIP32MasterPubKey(&seed, sizeof(seed));
 
     uint8_t pubKey[33];
 
-    BRBIP32PubKey(pubKey, sizeof(pubKey), mpk, SEQUENCE_EXTERNAL_CHAIN, 0);
+    LWBIP32PubKey(pubKey, sizeof(pubKey), mpk, SEQUENCE_EXTERNAL_CHAIN, 0);
     printf("000102030405060708090a0b0c0d0e0f/0H/0/0 pub = %02x%s\n", pubKey[0], u256hex(*(UInt256 *)&pubKey[1]));
     if (pubKey[0] != 0x02 ||
         ! UInt256Eq(*(UInt256 *)&pubKey[1],
                     uint256("7b6a7dd645507d775215a9035be06700e1ed8c541da9351b4bd14bd50ab61428")))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP32PubKey() test\n", __func__);
-
-    UInt512 dk;
-    BRAddress addr;
-
-    BRBIP39DeriveKey(dk.u8, "inhale praise target steak garlic cricket paper better evil almost sadness crawl city "
-                     "banner amused fringe fox insect roast aunt prefer hollow basic ladder", NULL);
-    BRBIP32BitIDKey(&key, dk.u8, sizeof(dk), 0, "http://bitid.bitcoin.blue/callback");
-    BRKeyAddress(&key, addr.s, sizeof(addr));
-#if BITCOIN_TESTNET
-    if (strncmp(addr.s, "mxZ2Dn9vcyNeKh9DNHZw6d6NrxeYCVNjc2", sizeof(addr)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP32BitIDKey() test\n", __func__);
-#else
-    if (strncmp(addr.s, "1J34vj4wowwPYafbeibZGht3zy3qERoUM1", sizeof(addr)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBIP32BitIDKey() test\n", __func__);
-#endif
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBIP32PubKey() test\n", __func__);
     
-    // TODO: XXX test BRBIP32SerializeMasterPrivKey()
-    // TODO: XXX test BRBIP32SerializeMasterPubKey()
+    // TODO: XXX test LWBIP32SerializeMasterPrivKey()
+    // TODO: XXX test LWBIP32SerializeMasterPubKey()
 
     printf("                                    ");
     return r;
 }
 
-static int BRTxOutputEqual(BRTxOutput *out1, BRTxOutput *out2) {
+static int LWTxOutputEqual(LWTxOutput *out1, LWTxOutput *out2) {
     return out1->amount == out2->amount
            && 0 == memcmp (out1->address, out2->address, sizeof (out1->address))
            && out1->scriptLen == out2->scriptLen
@@ -1647,7 +1587,7 @@ static int BRTxOutputEqual(BRTxOutput *out1, BRTxOutput *out2) {
 
 
 //
-static int BRTxInputEqual(BRTxInput *in1, BRTxInput *in2) {
+static int LWTxInputEqual(LWTxInput *in1, LWTxInput *in2) {
     return 0 == memcmp(&in1->txHash, &in2->txHash, sizeof(UInt256))
            && in1->index == in2->index
            && 0 == memcmp(in1->address, in2->address, sizeof(in1->address))
@@ -1660,7 +1600,7 @@ static int BRTxInputEqual(BRTxInput *in1, BRTxInput *in2) {
 }
 
 // true if tx1 and tx2 have equal data (in their respective structures).
-static int BRTransactionEqual (BRTransaction *tx1, BRTransaction *tx2) {
+static int LWTransactionEqual (LWTransaction *tx1, LWTransaction *tx2) {
     if (memcmp (&tx1->txHash, &tx2->txHash, sizeof(UInt256))
         || tx1->version != tx2->version
         || tx1->lockTime != tx2->lockTime
@@ -1673,137 +1613,137 @@ static int BRTransactionEqual (BRTransaction *tx1, BRTransaction *tx2) {
     // Inputs
     if (NULL != tx1->inputs)
         for (int i = 0; i < array_count(tx1->inputs); i++)
-            if (!BRTxInputEqual(&tx1->inputs[i], &tx2->inputs[i]))
+            if (!LWTxInputEqual(&tx1->inputs[i], &tx2->inputs[i]))
                 return 0;
     // Outputs
     if (NULL != tx1->outputs)
         for (int i = 0; i < array_count(tx1->outputs); i++)
-            if (!BRTxOutputEqual(&tx1->outputs[i], &tx2->outputs[i]))
+            if (!LWTxOutputEqual(&tx1->outputs[i], &tx2->outputs[i]))
                 return 0;
 
     return 1;
 }
 
-int BRTransactionTests()
+int LWTransactionTests()
 {
     int r = 1;
     UInt256 secret = uint256("0000000000000000000000000000000000000000000000000000000000000001"),
             inHash = uint256("0000000000000000000000000000000000000000000000000000000000000001");
-    BRKey k[2];
-    BRAddress address, addr;
+    LWKey k[2];
+    LWAddress address, addr;
     
     memset(&k[0], 0, sizeof(k[0])); // test with array of keys where first key is empty/invalid
-    BRKeySetSecret(&k[1], &secret, 1);
-    BRKeyAddress(&k[1], address.s, sizeof(address));
+    LWKeySetSecret(&k[1], &secret, 1);
+    LWKeyAddress(&k[1], address.s, sizeof(address));
 
-    uint8_t script[BRAddressScriptPubKey(NULL, 0, address.s)];
-    size_t scriptLen = BRAddressScriptPubKey(script, sizeof(script), address.s);
-    BRTransaction *tx = BRTransactionNew();
+    uint8_t script[LWAddressScriptPubKey(NULL, 0, address.s)];
+    size_t scriptLen = LWAddressScriptPubKey(script, sizeof(script), address.s);
+    LWTransaction *tx = LWTransactionNew();
     
-    BRTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddOutput(tx, 100000000, script, scriptLen);
-    BRTransactionAddOutput(tx, 4900000000, script, scriptLen);
+    LWTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddOutput(tx, 100000000, script, scriptLen);
+    LWTransactionAddOutput(tx, 4900000000, script, scriptLen);
     
-    uint8_t buf[BRTransactionSerialize(tx, NULL, 0)]; // test serializing/parsing unsigned tx
-    size_t len = BRTransactionSerialize(tx, buf, sizeof(buf));
+    uint8_t buf[LWTransactionSerialize(tx, NULL, 0)]; // test serializing/parsing unsigned tx
+    size_t len = LWTransactionSerialize(tx, buf, sizeof(buf));
     
-    if (len == 0) r = 0, fprintf(stderr, "\n***FAILED*** %s: BRTransactionSerialize() test 0", __func__);
-    BRTransactionFree(tx);
-    tx = BRTransactionParse(buf, len);
+    if (len == 0) r = 0, fprintf(stderr, "\n***FAILED*** %s: LWTransactionSerialize() test 0", __func__);
+    LWTransactionFree(tx);
+    tx = LWTransactionParse(buf, len);
     
     if (! tx || tx->inCount != 1 || tx->outCount != 2)
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRTransactionParse() test 0", __func__);
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWTransactionParse() test 0", __func__);
     if (! tx) return r;
     
-    BRTransactionSign(tx, 0, k, 2);
-    BRAddressFromScriptSig(addr.s, sizeof(addr), tx->inputs[0].signature, tx->inputs[0].sigLen);
-    if (! BRTransactionIsSigned(tx) || ! BRAddressEq(&address, &addr))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRTransactionSign() test 1", __func__);
+    LWTransactionSign(tx, 0, k, 2);
+    LWAddressFromScriptSig(addr.s, sizeof(addr), tx->inputs[0].signature, tx->inputs[0].sigLen);
+    if (! LWTransactionIsSigned(tx) || ! LWAddressEq(&address, &addr))
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWTransactionSign() test 1", __func__);
 
-    uint8_t buf2[BRTransactionSerialize(tx, NULL, 0)];
-    size_t len2 = BRTransactionSerialize(tx, buf2, sizeof(buf2));
+    uint8_t buf2[LWTransactionSerialize(tx, NULL, 0)];
+    size_t len2 = LWTransactionSerialize(tx, buf2, sizeof(buf2));
 
-    BRTransactionFree(tx);
-    tx = BRTransactionParse(buf2, len2);
+    LWTransactionFree(tx);
+    tx = LWTransactionParse(buf2, len2);
 
-    if (! tx || ! BRTransactionIsSigned(tx))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRTransactionParse() test 1", __func__);
+    if (! tx || ! LWTransactionIsSigned(tx))
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWTransactionParse() test 1", __func__);
     if (! tx) return r;
     
-    uint8_t buf3[BRTransactionSerialize(tx, NULL, 0)];
-    size_t len3 = BRTransactionSerialize(tx, buf3, sizeof(buf3));
+    uint8_t buf3[LWTransactionSerialize(tx, NULL, 0)];
+    size_t len3 = LWTransactionSerialize(tx, buf3, sizeof(buf3));
     
     if (len2 != len3 || memcmp(buf2, buf3, len2) != 0)
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRTransactionSerialize() test 1", __func__);
-    BRTransactionFree(tx);
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWTransactionSerialize() test 1", __func__);
+    LWTransactionFree(tx);
     
-    tx = BRTransactionNew();
-    BRTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddOutput(tx, 1000000, script, scriptLen);
-    BRTransactionAddOutput(tx, 1000000, script, scriptLen);
-    BRTransactionAddOutput(tx, 1000000, script, scriptLen);
-    BRTransactionAddOutput(tx, 1000000, script, scriptLen);
-    BRTransactionAddOutput(tx, 1000000, script, scriptLen);
-    BRTransactionAddOutput(tx, 1000000, script, scriptLen);
-    BRTransactionAddOutput(tx, 1000000, script, scriptLen);
-    BRTransactionAddOutput(tx, 1000000, script, scriptLen);
-    BRTransactionAddOutput(tx, 1000000, script, scriptLen);
-    BRTransactionAddOutput(tx, 1000000, script, scriptLen);
-    BRTransactionSign(tx, 0, k, 2);
-    BRAddressFromScriptSig(addr.s, sizeof(addr), tx->inputs[tx->inCount - 1].signature,
+    tx = LWTransactionNew();
+    LWTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddInput(tx, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddOutput(tx, 1000000, script, scriptLen);
+    LWTransactionAddOutput(tx, 1000000, script, scriptLen);
+    LWTransactionAddOutput(tx, 1000000, script, scriptLen);
+    LWTransactionAddOutput(tx, 1000000, script, scriptLen);
+    LWTransactionAddOutput(tx, 1000000, script, scriptLen);
+    LWTransactionAddOutput(tx, 1000000, script, scriptLen);
+    LWTransactionAddOutput(tx, 1000000, script, scriptLen);
+    LWTransactionAddOutput(tx, 1000000, script, scriptLen);
+    LWTransactionAddOutput(tx, 1000000, script, scriptLen);
+    LWTransactionAddOutput(tx, 1000000, script, scriptLen);
+    LWTransactionSign(tx, 0, k, 2);
+    LWAddressFromScriptSig(addr.s, sizeof(addr), tx->inputs[tx->inCount - 1].signature,
                            tx->inputs[tx->inCount - 1].sigLen);
-    if (! BRTransactionIsSigned(tx) || ! BRAddressEq(&address, &addr))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRTransactionSign() test 2", __func__);
+    if (! LWTransactionIsSigned(tx) || ! LWAddressEq(&address, &addr))
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWTransactionSign() test 2", __func__);
 
-    uint8_t buf4[BRTransactionSerialize(tx, NULL, 0)];
-    size_t len4 = BRTransactionSerialize(tx, buf4, sizeof(buf4));
+    uint8_t buf4[LWTransactionSerialize(tx, NULL, 0)];
+    size_t len4 = LWTransactionSerialize(tx, buf4, sizeof(buf4));
     
-    BRTransactionFree(tx);
-    tx = BRTransactionParse(buf4, len4);
-    if (! tx || ! BRTransactionIsSigned(tx))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRTransactionParse() test 2", __func__);
+    LWTransactionFree(tx);
+    tx = LWTransactionParse(buf4, len4);
+    if (! tx || ! LWTransactionIsSigned(tx))
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWTransactionParse() test 2", __func__);
     if (! tx) return r;
 
-    uint8_t buf5[BRTransactionSerialize(tx, NULL, 0)];
-    size_t len5 = BRTransactionSerialize(tx, buf5, sizeof(buf5));
+    uint8_t buf5[LWTransactionSerialize(tx, NULL, 0)];
+    size_t len5 = LWTransactionSerialize(tx, buf5, sizeof(buf5));
     
     if (len4 != len5 || memcmp(buf4, buf5, len4) != 0)
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRTransactionSerialize() test 2", __func__);
-    BRTransactionFree(tx);
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWTransactionSerialize() test 2", __func__);
+    LWTransactionFree(tx);
 
-    BRTransaction *src = BRTransactionNew ();
-    BRTransactionAddInput(src, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddInput(src, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddOutput(src, 1000000, script, scriptLen);
-    BRTransactionAddOutput(src, 1000000, script, scriptLen);
-    BRTransactionAddOutput(src, 1000000, script, scriptLen);
+    LWTransaction *src = LWTransactionNew ();
+    LWTransactionAddInput(src, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddInput(src, inHash, 0, 1, script, scriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddOutput(src, 1000000, script, scriptLen);
+    LWTransactionAddOutput(src, 1000000, script, scriptLen);
+    LWTransactionAddOutput(src, 1000000, script, scriptLen);
 
-    BRTransaction *tgt = BRTransactionCopy(src);
-    if (!BRTransactionEqual(tgt, src))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRTransactionCopy() test 1", __func__);
+    LWTransaction *tgt = LWTransactionCopy(src);
+    if (!LWTransactionEqual(tgt, src))
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWTransactionCopy() test 1", __func__);
 
     tgt->blockHeight++;
-    if (BRTransactionEqual(tgt, src)) // fail if equal
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRTransactionCopy() test 2", __func__);
+    if (LWTransactionEqual(tgt, src)) // fail if equal
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWTransactionCopy() test 2", __func__);
 
-    BRTransactionFree(tgt);
-    BRTransactionFree(src);
+    LWTransactionFree(tgt);
+    LWTransactionFree(src);
 
-    src = BRTransactionParse(buf4, len4);
-    tgt = BRTransactionCopy(src);
-    if (!BRTransactionEqual(tgt, src))
-        r = 0, fprintf(stderr, "\n***FAILED*** %s: BRTransactionCopy() test 3", __func__);
-    BRTransactionFree(tgt);
-    BRTransactionFree(src);
+    src = LWTransactionParse(buf4, len4);
+    tgt = LWTransactionCopy(src);
+    if (!LWTransactionEqual(tgt, src))
+        r = 0, fprintf(stderr, "\n***FAILED*** %s: LWTransactionCopy() test 3", __func__);
+    LWTransactionFree(tgt);
+    LWTransactionFree(src);
     
     if (! r) fprintf(stderr, "\n                                    ");
     return r;
@@ -1814,7 +1754,7 @@ static void walletBalanceChanged(void *info, uint64_t balance)
     printf("balance changed %"PRIu64"\n", balance);
 }
 
-static void walletTxAdded(void *info, BRTransaction *tx)
+static void walletTxAdded(void *info, LWTransaction *tx)
 {
     printf("tx added: %s\n", u256hex(tx->txHash));
 }
@@ -1838,243 +1778,243 @@ static void walletTxDeleted(void *info, UInt256 txHash, int notifyUser, int reco
 // TODO: test tx ordering for multiple tx with same block height
 // TODO: port all applicable tests from bitcoinj and bitcoincore
 
-int BRWalletTests()
+int LWWalletTests()
 {
     int r = 1;
-    BRMasterPubKey mpk = BRBIP32MasterPubKey("", 1);
-    BRWallet *w = BRWalletNew(NULL, 0, mpk);
+    LWMasterPubKey mpk = LWBIP32MasterPubKey("", 1);
+    LWWallet *w = LWWalletNew(NULL, 0, mpk);
     UInt256 secret = uint256("0000000000000000000000000000000000000000000000000000000000000001"),
             inHash = uint256("0000000000000000000000000000000000000000000000000000000000000001");
-    BRKey k;
-    BRAddress addr, recvAddr = BRWalletReceiveAddress(w);
-    BRTransaction *tx;
+    LWKey k;
+    LWAddress addr, recvAddr = LWWalletReceiveAddress(w);
+    LWTransaction *tx;
     
     printf("\n");
     
-    BRWalletSetCallbacks(w, w, walletBalanceChanged, walletTxAdded, walletTxUpdated, walletTxDeleted);
-    BRKeySetSecret(&k, &secret, 1);
-    BRKeyAddress(&k, addr.s, sizeof(addr));
+    LWWalletSetCallbacks(w, w, walletBalanceChanged, walletTxAdded, walletTxUpdated, walletTxDeleted);
+    LWKeySetSecret(&k, &secret, 1);
+    LWKeyAddress(&k, addr.s, sizeof(addr));
     
-    tx = BRWalletCreateTransaction(w, 1, addr.s);
-    if (tx) r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletCreateTransaction() test 0\n", __func__);
+    tx = LWWalletCreateTransaction(w, 1, addr.s);
+    if (tx) r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletCreateTransaction() test 0\n", __func__);
     
-    tx = BRWalletCreateTransaction(w, SATOSHIS, addr.s);
-    if (tx) r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletCreateTransaction() test 1\n", __func__);
+    tx = LWWalletCreateTransaction(w, SATOSHIS, addr.s);
+    if (tx) r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletCreateTransaction() test 1\n", __func__);
     
-    uint8_t inScript[BRAddressScriptPubKey(NULL, 0, addr.s)];
-    size_t inScriptLen = BRAddressScriptPubKey(inScript, sizeof(inScript), addr.s);
-    uint8_t outScript[BRAddressScriptPubKey(NULL, 0, recvAddr.s)];
-    size_t outScriptLen = BRAddressScriptPubKey(outScript, sizeof(outScript), recvAddr.s);
+    uint8_t inScript[LWAddressScriptPubKey(NULL, 0, addr.s)];
+    size_t inScriptLen = LWAddressScriptPubKey(inScript, sizeof(inScript), addr.s);
+    uint8_t outScript[LWAddressScriptPubKey(NULL, 0, recvAddr.s)];
+    size_t outScriptLen = LWAddressScriptPubKey(outScript, sizeof(outScript), recvAddr.s);
     
-    tx = BRTransactionNew();
-    BRTransactionAddInput(tx, inHash, 0, 1, inScript, inScriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddOutput(tx, SATOSHIS, outScript, outScriptLen);
-//    BRWalletRegisterTransaction(w, tx); // test adding unsigned tx
-//    if (BRWalletBalance(w) != 0)
-//        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletRegisterTransaction() test 1\n", __func__);
+    tx = LWTransactionNew();
+    LWTransactionAddInput(tx, inHash, 0, 1, inScript, inScriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddOutput(tx, SATOSHIS, outScript, outScriptLen);
+//    LWWalletRegisterTransaction(w, tx); // test adding unsigned tx
+//    if (LWWalletBalance(w) != 0)
+//        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletRegisterTransaction() test 1\n", __func__);
 
-    if (BRWalletTransactions(w, NULL, 0) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactions() test 1\n", __func__);
+    if (LWWalletTransactions(w, NULL, 0) != 0)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactions() test 1\n", __func__);
 
-    BRTransactionSign(tx, 0, &k, 1);
-    BRWalletRegisterTransaction(w, tx);
-    if (BRWalletBalance(w) != SATOSHIS)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletRegisterTransaction() test 2\n", __func__);
+    LWTransactionSign(tx, 0, &k, 1);
+    LWWalletRegisterTransaction(w, tx);
+    if (LWWalletBalance(w) != SATOSHIS)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletRegisterTransaction() test 2\n", __func__);
 
-    if (BRWalletTransactions(w, NULL, 0) != 1)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactions() test 2\n", __func__);
+    if (LWWalletTransactions(w, NULL, 0) != 1)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactions() test 2\n", __func__);
 
-    BRWalletRegisterTransaction(w, tx); // test adding same tx twice
-    if (BRWalletBalance(w) != SATOSHIS)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletRegisterTransaction() test 3\n", __func__);
+    LWWalletRegisterTransaction(w, tx); // test adding same tx twice
+    if (LWWalletBalance(w) != SATOSHIS)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletRegisterTransaction() test 3\n", __func__);
 
-    tx = BRTransactionNew();
-    BRTransactionAddInput(tx, inHash, 1, 1, inScript, inScriptLen, NULL, 0, TXIN_SEQUENCE - 1);
-    BRTransactionAddOutput(tx, SATOSHIS, outScript, outScriptLen);
+    tx = LWTransactionNew();
+    LWTransactionAddInput(tx, inHash, 1, 1, inScript, inScriptLen, NULL, 0, TXIN_SEQUENCE - 1);
+    LWTransactionAddOutput(tx, SATOSHIS, outScript, outScriptLen);
     tx->lockTime = 1000;
-    BRTransactionSign(tx, 0, &k, 1);
+    LWTransactionSign(tx, 0, &k, 1);
 
-    if (! BRWalletTransactionIsPending(w, tx))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactionIsPending() test\n", __func__);
+    if (! LWWalletTransactionIsPending(w, tx))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactionIsPending() test\n", __func__);
 
-    BRWalletRegisterTransaction(w, tx); // test adding tx with future lockTime
-    if (BRWalletBalance(w) != SATOSHIS)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletRegisterTransaction() test 4\n", __func__);
+    LWWalletRegisterTransaction(w, tx); // test adding tx with future lockTime
+    if (LWWalletBalance(w) != SATOSHIS)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletRegisterTransaction() test 4\n", __func__);
 
-    BRWalletUpdateTransactions(w, &tx->txHash, 1, 1000, 1);
-    if (BRWalletBalance(w) != SATOSHIS*2)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletUpdateTransactions() test\n", __func__);
+    LWWalletUpdateTransactions(w, &tx->txHash, 1, 1000, 1);
+    if (LWWalletBalance(w) != SATOSHIS*2)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletUpdateTransactions() test\n", __func__);
 
-    BRWalletFree(w);
-    tx = BRTransactionNew();
-    BRTransactionAddInput(tx, inHash, 0, 1, inScript, inScriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddOutput(tx, SATOSHIS, outScript, outScriptLen);
-    BRTransactionSign(tx, 0, &k, 1);
+    LWWalletFree(w);
+    tx = LWTransactionNew();
+    LWTransactionAddInput(tx, inHash, 0, 1, inScript, inScriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddOutput(tx, SATOSHIS, outScript, outScriptLen);
+    LWTransactionSign(tx, 0, &k, 1);
     tx->timestamp = 1;
-    w = BRWalletNew(&tx, 1, mpk);
-    if (BRWalletBalance(w) != SATOSHIS)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletNew() test\n", __func__);
+    w = LWWalletNew(&tx, 1, mpk);
+    if (LWWalletBalance(w) != SATOSHIS)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletNew() test\n", __func__);
 
-    if (BRWalletAllAddrs(w, NULL, 0) != SEQUENCE_GAP_LIMIT_EXTERNAL + SEQUENCE_GAP_LIMIT_INTERNAL + 1)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletAllAddrs() test\n", __func__);
+    if (LWWalletAllAddrs(w, NULL, 0) != SEQUENCE_GAP_LIMIT_EXTERNAL + SEQUENCE_GAP_LIMIT_INTERNAL + 1)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletAllAddrs() test\n", __func__);
     
     UInt256 hash = tx->txHash;
 
-    tx = BRWalletCreateTransaction(w, SATOSHIS*2, addr.s);
-    if (tx) r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletCreateTransaction() test 3\n", __func__);
+    tx = LWWalletCreateTransaction(w, SATOSHIS*2, addr.s);
+    if (tx) r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletCreateTransaction() test 3\n", __func__);
 
-    if (BRWalletFeeForTxAmount(w, SATOSHIS/2) < 1000)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletFeeForTxAmount() test 1\n", __func__);
+    if (LWWalletFeeForTxAmount(w, SATOSHIS/2) < 1000)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletFeeForTxAmount() test 1\n", __func__);
     
-    tx = BRWalletCreateTransaction(w, SATOSHIS/2, addr.s);
-    if (! tx) r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletCreateTransaction() test 4\n", __func__);
+    tx = LWWalletCreateTransaction(w, SATOSHIS/2, addr.s);
+    if (! tx) r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletCreateTransaction() test 4\n", __func__);
 
-    if (tx) BRWalletSignTransaction(w, tx, 0, "", 1);
-    if (tx && ! BRTransactionIsSigned(tx))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletSignTransaction() test\n", __func__);
+    if (tx) LWWalletSignTransaction(w, tx, 0, "", 1);
+    if (tx && ! LWTransactionIsSigned(tx))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletSignTransaction() test\n", __func__);
     
-    if (tx) tx->timestamp = 1, BRWalletRegisterTransaction(w, tx);
-    if (tx && BRWalletBalance(w) + BRWalletFeeForTx(w, tx) != SATOSHIS/2)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletRegisterTransaction() test 5\n", __func__);
+    if (tx) tx->timestamp = 1, LWWalletRegisterTransaction(w, tx);
+    if (tx && LWWalletBalance(w) + LWWalletFeeForTx(w, tx) != SATOSHIS/2)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletRegisterTransaction() test 5\n", __func__);
     
-    if (BRWalletTransactions(w, NULL, 0) != 2)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactions() test 3\n", __func__);
+    if (LWWalletTransactions(w, NULL, 0) != 2)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactions() test 3\n", __func__);
     
-    if (tx && BRWalletTransactionForHash(w, tx->txHash) != tx)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactionForHash() test\n", __func__);
+    if (tx && LWWalletTransactionForHash(w, tx->txHash) != tx)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactionForHash() test\n", __func__);
 
-    if (tx && ! BRWalletTransactionIsValid(w, tx))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactionIsValid() test\n", __func__);
+    if (tx && ! LWWalletTransactionIsValid(w, tx))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactionIsValid() test\n", __func__);
 
-    if (tx && ! BRWalletTransactionIsVerified(w, tx))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactionIsVerified() test\n", __func__);
+    if (tx && ! LWWalletTransactionIsVerified(w, tx))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactionIsVerified() test\n", __func__);
 
-    if (tx && BRWalletTransactionIsPending(w, tx))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletTransactionIsPending() test 2\n", __func__);
+    if (tx && LWWalletTransactionIsPending(w, tx))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletTransactionIsPending() test 2\n", __func__);
     
-    BRWalletRemoveTransaction(w, hash); // removing first tx should recursively remove second, leaving none
-    if (BRWalletTransactions(w, NULL, 0) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletRemoveTransaction() test\n", __func__);
+    LWWalletRemoveTransaction(w, hash); // removing first tx should recursively remove second, leaving none
+    if (LWWalletTransactions(w, NULL, 0) != 0)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletRemoveTransaction() test\n", __func__);
 
-    if (! BRAddressEq(BRWalletReceiveAddress(w).s, recvAddr.s)) // verify used addresses are correctly tracked
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletReceiveAddress() test\n", __func__);
+    if (! LWAddressEq(LWWalletReceiveAddress(w).s, recvAddr.s)) // verify used addresses are correctly tracked
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletReceiveAddress() test\n", __func__);
     
-    if (BRWalletFeeForTxAmount(w, SATOSHIS) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletFeeForTxAmount() test 2\n", __func__);
+    if (LWWalletFeeForTxAmount(w, SATOSHIS) != 0)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletFeeForTxAmount() test 2\n", __func__);
     
     printf("                                    ");
-    BRWalletFree(w);
+    LWWalletFree(w);
 
     int64_t amt;
     
-    tx = BRTransactionNew();
-    BRTransactionAddInput(tx, inHash, 0, 1, inScript, inScriptLen, NULL, 0, TXIN_SEQUENCE);
-    BRTransactionAddOutput(tx, 740000, outScript, outScriptLen);
-    BRTransactionSign(tx, 0, &k, 1);
-    w = BRWalletNew(&tx, 1, mpk);
-    BRWalletSetCallbacks(w, w, walletBalanceChanged, walletTxAdded, walletTxUpdated, walletTxDeleted);
-    BRWalletSetFeePerKb(w, 65000);
-    amt = BRWalletMaxOutputAmount(w);
-    tx = BRWalletCreateTransaction(w, amt, addr.s);
+    tx = LWTransactionNew();
+    LWTransactionAddInput(tx, inHash, 0, 1, inScript, inScriptLen, NULL, 0, TXIN_SEQUENCE);
+    LWTransactionAddOutput(tx, 740000, outScript, outScriptLen);
+    LWTransactionSign(tx, 0, &k, 1);
+    w = LWWalletNew(&tx, 1, mpk);
+    LWWalletSetCallbacks(w, w, walletBalanceChanged, walletTxAdded, walletTxUpdated, walletTxDeleted);
+    LWWalletSetFeePerKb(w, 65000);
+    amt = LWWalletMaxOutputAmount(w);
+    tx = LWWalletCreateTransaction(w, amt, addr.s);
     
-    if (BRWalletAmountSentByTx(w, tx) - BRWalletFeeForTx(w, tx) != amt || BRWalletAmountReceivedFromTx(w, tx) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRWalletMaxOutputAmount() test 1\n", __func__);
+    if (LWWalletAmountSentByTx(w, tx) - LWWalletFeeForTx(w, tx) != amt || LWWalletAmountReceivedFromTx(w, tx) != 0)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWWalletMaxOutputAmount() test 1\n", __func__);
 
-    BRTransactionFree(tx);
-    BRWalletFree(w);
+    LWTransactionFree(tx);
+    LWWalletFree(w);
     
-    amt = BRBitcoinAmount(50000, 50000);
-    if (amt != SATOSHIS) r = 0, fprintf(stderr, "***FAILED*** %s: BRBitcoinAmount() test 1\n", __func__);
+    amt = LWBitcoinAmount(50000, 50000);
+    if (amt != SATOSHIS) r = 0, fprintf(stderr, "***FAILED*** %s: LWBitcoinAmount() test 1\n", __func__);
 
-    amt = BRBitcoinAmount(-50000, 50000);
-    if (amt != -SATOSHIS) r = 0, fprintf(stderr, "***FAILED*** %s: BRBitcoinAmount() test 2\n", __func__);
+    amt = LWBitcoinAmount(-50000, 50000);
+    if (amt != -SATOSHIS) r = 0, fprintf(stderr, "***FAILED*** %s: LWBitcoinAmount() test 2\n", __func__);
     
-    amt = BRLocalAmount(SATOSHIS, 50000);
-    if (amt != 50000) r = 0, fprintf(stderr, "***FAILED*** %s: BRLocalAmount() test 1\n", __func__);
+    amt = LWLocalAmount(SATOSHIS, 50000);
+    if (amt != 50000) r = 0, fprintf(stderr, "***FAILED*** %s: LWLocalAmount() test 1\n", __func__);
 
-    amt = BRLocalAmount(-SATOSHIS, 50000);
-    if (amt != -50000) r = 0, fprintf(stderr, "***FAILED*** %s: BRLocalAmount() test 2\n", __func__);
+    amt = LWLocalAmount(-SATOSHIS, 50000);
+    if (amt != -50000) r = 0, fprintf(stderr, "***FAILED*** %s: LWLocalAmount() test 2\n", __func__);
     
     return r;
 }
 
-int BRBloomFilterTests()
+int LWBloomFilterTests()
 {
     int r = 1;
-    BRBloomFilter *f = BRBloomFilterNew(0.01, 3, 0, BLOOM_UPDATE_ALL);
+    LWBloomFilter *f = LWBloomFilterNew(0.01, 3, 0, BLOOM_UPDATE_ALL);
     char data1[] = "\x99\x10\x8a\xd8\xed\x9b\xb6\x27\x4d\x39\x80\xba\xb5\xa8\x5c\x04\x8f\x09\x50\xc8";
 
-    BRBloomFilterInsertData(f, (uint8_t *)data1, sizeof(data1) - 1);
-    if (! BRBloomFilterContainsData(f, (uint8_t *)data1, sizeof(data1) - 1))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBloomFilterContainsData() test 1\n", __func__);
+    LWBloomFilterInsertData(f, (uint8_t *)data1, sizeof(data1) - 1);
+    if (! LWBloomFilterContainsData(f, (uint8_t *)data1, sizeof(data1) - 1))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBloomFilterContainsData() test 1\n", __func__);
 
     // one bit difference
     char data2[] = "\x19\x10\x8a\xd8\xed\x9b\xb6\x27\x4d\x39\x80\xba\xb5\xa8\x5c\x04\x8f\x09\x50\xc8";
     
-    if (BRBloomFilterContainsData(f, (uint8_t *)data2, sizeof(data2) - 1))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBloomFilterContainsData() test 2\n", __func__);
+    if (LWBloomFilterContainsData(f, (uint8_t *)data2, sizeof(data2) - 1))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBloomFilterContainsData() test 2\n", __func__);
     
     char data3[] = "\xb5\xa2\xc7\x86\xd9\xef\x46\x58\x28\x7c\xed\x59\x14\xb3\x7a\x1b\x4a\xa3\x2e\xee";
 
-    BRBloomFilterInsertData(f, (uint8_t *)data3, sizeof(data3) - 1);
-    if (! BRBloomFilterContainsData(f, (uint8_t *)data3, sizeof(data3) - 1))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBloomFilterContainsData() test 3\n", __func__);
+    LWBloomFilterInsertData(f, (uint8_t *)data3, sizeof(data3) - 1);
+    if (! LWBloomFilterContainsData(f, (uint8_t *)data3, sizeof(data3) - 1))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBloomFilterContainsData() test 3\n", __func__);
 
     char data4[] = "\xb9\x30\x06\x70\xb4\xc5\x36\x6e\x95\xb2\x69\x9e\x8b\x18\xbc\x75\xe5\xf7\x29\xc5";
     
-    BRBloomFilterInsertData(f, (uint8_t *)data4, sizeof(data4) - 1);
-    if (! BRBloomFilterContainsData(f, (uint8_t *)data4, sizeof(data4) - 1))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBloomFilterContainsData() test 4\n", __func__);
+    LWBloomFilterInsertData(f, (uint8_t *)data4, sizeof(data4) - 1);
+    if (! LWBloomFilterContainsData(f, (uint8_t *)data4, sizeof(data4) - 1))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBloomFilterContainsData() test 4\n", __func__);
 
     // check against satoshi client output
-    uint8_t buf1[BRBloomFilterSerialize(f, NULL, 0)];
-    size_t len1 = BRBloomFilterSerialize(f, buf1, sizeof(buf1));
+    uint8_t buf1[LWBloomFilterSerialize(f, NULL, 0)];
+    size_t len1 = LWBloomFilterSerialize(f, buf1, sizeof(buf1));
     char d1[] = "\x03\x61\x4e\x9b\x05\x00\x00\x00\x00\x00\x00\x00\x01";
     
     if (len1 != sizeof(d1) - 1 || memcmp(buf1, d1, len1) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBloomFilterSerialize() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBloomFilterSerialize() test 1\n", __func__);
     
-    BRBloomFilterFree(f);
-    f = BRBloomFilterNew(0.01, 3, 2147483649, BLOOM_UPDATE_P2PUBKEY_ONLY);
+    LWBloomFilterFree(f);
+    f = LWBloomFilterNew(0.01, 3, 2147483649, BLOOM_UPDATE_P2PUBKEY_ONLY);
 
     char data5[] = "\x99\x10\x8a\xd8\xed\x9b\xb6\x27\x4d\x39\x80\xba\xb5\xa8\x5c\x04\x8f\x09\x50\xc8";
     
-    BRBloomFilterInsertData(f, (uint8_t *)data5, sizeof(data5) - 1);
-    if (! BRBloomFilterContainsData(f, (uint8_t *)data5, sizeof(data5) - 1))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBloomFilterContainsData() test 5\n", __func__);
+    LWBloomFilterInsertData(f, (uint8_t *)data5, sizeof(data5) - 1);
+    if (! LWBloomFilterContainsData(f, (uint8_t *)data5, sizeof(data5) - 1))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBloomFilterContainsData() test 5\n", __func__);
 
     // one bit difference
     char data6[] = "\x19\x10\x8a\xd8\xed\x9b\xb6\x27\x4d\x39\x80\xba\xb5\xa8\x5c\x04\x8f\x09\x50\xc8";
     
-    if (BRBloomFilterContainsData(f, (uint8_t *)data6, sizeof(data6) - 1))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBloomFilterContainsData() test 6\n", __func__);
+    if (LWBloomFilterContainsData(f, (uint8_t *)data6, sizeof(data6) - 1))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBloomFilterContainsData() test 6\n", __func__);
 
     char data7[] = "\xb5\xa2\xc7\x86\xd9\xef\x46\x58\x28\x7c\xed\x59\x14\xb3\x7a\x1b\x4a\xa3\x2e\xee";
     
-    BRBloomFilterInsertData(f, (uint8_t *)data7, sizeof(data7) - 1);
-    if (! BRBloomFilterContainsData(f, (uint8_t *)data7, sizeof(data7) - 1))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBloomFilterContainsData() test 7\n", __func__);
+    LWBloomFilterInsertData(f, (uint8_t *)data7, sizeof(data7) - 1);
+    if (! LWBloomFilterContainsData(f, (uint8_t *)data7, sizeof(data7) - 1))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBloomFilterContainsData() test 7\n", __func__);
 
     char data8[] = "\xb9\x30\x06\x70\xb4\xc5\x36\x6e\x95\xb2\x69\x9e\x8b\x18\xbc\x75\xe5\xf7\x29\xc5";
     
-    BRBloomFilterInsertData(f, (uint8_t *)data8, sizeof(data8) - 1);
-    if (! BRBloomFilterContainsData(f, (uint8_t *)data8, sizeof(data8) - 1))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBloomFilterContainsData() test 8\n", __func__);
+    LWBloomFilterInsertData(f, (uint8_t *)data8, sizeof(data8) - 1);
+    if (! LWBloomFilterContainsData(f, (uint8_t *)data8, sizeof(data8) - 1))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBloomFilterContainsData() test 8\n", __func__);
 
     // check against satoshi client output
-    uint8_t buf2[BRBloomFilterSerialize(f, NULL, 0)];
-    size_t len2 = BRBloomFilterSerialize(f, buf2, sizeof(buf2));
+    uint8_t buf2[LWBloomFilterSerialize(f, NULL, 0)];
+    size_t len2 = LWBloomFilterSerialize(f, buf2, sizeof(buf2));
     char d2[] = "\x03\xce\x42\x99\x05\x00\x00\x00\x01\x00\x00\x80\x02";
     
     if (len2 != sizeof(d2) - 1 || memcmp(buf2, d2, len2) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRBloomFilterSerialize() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWBloomFilterSerialize() test 2\n", __func__);
     
-    BRBloomFilterFree(f);    
+    LWBloomFilterFree(f);    
     return r;
 }
 
 // true if block and otherBlock have equal data (in their respective structures).
-static int BRMerkleBlockEqual (const BRMerkleBlock *block1, const BRMerkleBlock *block2) {
+static int LWMerkleBlockEqual (const LWMerkleBlock *block1, const LWMerkleBlock *block2) {
     return 0 == memcmp(&block1->blockHash, &block2->blockHash, sizeof(UInt256))
            && block1->version == block2->version
            && 0 == memcmp(&block1->prevBlock, &block2->prevBlock, sizeof(UInt256))
@@ -2090,7 +2030,7 @@ static int BRMerkleBlockEqual (const BRMerkleBlock *block1, const BRMerkleBlock 
            && block1->height == block2->height;
 }
 
-int BRMerkleBlockTests()
+int LWMerkleBlockTests()
 {
     int r = 1;
     char block[] = // block 10001 filtered to include only transactions 0, 1, 2, and 6
@@ -2108,66 +2048,66 @@ int BRMerkleBlockTests()
     "\xab\x74\x1f\xa7\x82\x76\x22\x26\x51\x20\x9f\xe1\xa2\xc4\xc0\xfa\x1c\x58\x51\x0a\xec\x8b\x09\x0d\xd1\xeb\x1f\x82"
     "\xf9\xd2\x61\xb8\x27\x3b\x52\x5b\x02\xff\x1a";
     uint8_t block2[sizeof(block) - 1];
-    BRMerkleBlock *b;
+    LWMerkleBlock *b;
     
-    b = BRMerkleBlockParse((uint8_t *)block, sizeof(block) - 1);
+    b = LWMerkleBlockParse((uint8_t *)block, sizeof(block) - 1);
     
     if (! UInt256Eq(b->blockHash,
                     UInt256Reverse(uint256("00000000000080b66c911bd5ba14a74260057311eaeb1982802f7010f1a9f090"))))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRMerkleBlockParse() test\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWMerkleBlockParse() test\n", __func__);
 
-    if (! BRMerkleBlockIsValid(b, (uint32_t)time(NULL)))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRMerkleBlockParse() test\n", __func__);
+    if (! LWMerkleBlockIsValid(b, (uint32_t)time(NULL)))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWMerkleBlockParse() test\n", __func__);
     
-    if (BRMerkleBlockSerialize(b, block2, sizeof(block2)) != sizeof(block2) ||
+    if (LWMerkleBlockSerialize(b, block2, sizeof(block2)) != sizeof(block2) ||
         memcmp(block, block2, sizeof(block2)) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRMerkleBlockSerialize() test\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWMerkleBlockSerialize() test\n", __func__);
     
-    if (! BRMerkleBlockContainsTxHash(b, uint256("4c30b63cfcdc2d35e3329421b9805ef0c6565d35381ca857762ea0b3a5a128bb")))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRMerkleBlockContainsTxHash() test\n", __func__);
+    if (! LWMerkleBlockContainsTxHash(b, uint256("4c30b63cfcdc2d35e3329421b9805ef0c6565d35381ca857762ea0b3a5a128bb")))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWMerkleBlockContainsTxHash() test\n", __func__);
     
-    if (BRMerkleBlockTxHashes(b, NULL, 0) != 4)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRMerkleBlockTxHashes() test 0\n", __func__);
+    if (LWMerkleBlockTxHashes(b, NULL, 0) != 4)
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWMerkleBlockTxHashes() test 0\n", __func__);
     
-    UInt256 txHashes[BRMerkleBlockTxHashes(b, NULL, 0)];
+    UInt256 txHashes[LWMerkleBlockTxHashes(b, NULL, 0)];
     
-    BRMerkleBlockTxHashes(b, txHashes, 4);
+    LWMerkleBlockTxHashes(b, txHashes, 4);
     
     if (! UInt256Eq(txHashes[0], uint256("4c30b63cfcdc2d35e3329421b9805ef0c6565d35381ca857762ea0b3a5a128bb")))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRMerkleBlockTxHashes() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWMerkleBlockTxHashes() test 1\n", __func__);
     
     if (! UInt256Eq(txHashes[1], uint256("ca5065ff9617cbcba45eb23726df6498a9b9cafed4f54cbab9d227b0035ddefb")))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRMerkleBlockTxHashes() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWMerkleBlockTxHashes() test 2\n", __func__);
     
     if (! UInt256Eq(txHashes[2], uint256("bb15ac1d57d0182aaee61c74743a9c4f785895e563909bafec45c9a2b0ff3181")))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRMerkleBlockTxHashes() test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWMerkleBlockTxHashes() test 3\n", __func__);
     
     if (! UInt256Eq(txHashes[3], uint256("c9ab658448c10b6921b7a4ce3021eb22ed6bb6a7fde1e5bcc4b1db6615c6abc5")))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRMerkleBlockTxHashes() test 4\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWMerkleBlockTxHashes() test 4\n", __func__);
     
     // TODO: test a block with an odd number of tree rows both at the tx level and merkle node level
 
-    // TODO: XXX test BRMerkleBlockVerifyDifficulty()
+    // TODO: XXX test LWMerkleBlockVerifyDifficulty()
     
     // TODO: test (CVE-2012-2459) vulnerability
 
-    BRMerkleBlock *c = BRMerkleBlockCopy(b);
+    LWMerkleBlock *c = LWMerkleBlockCopy(b);
 
-    if (!BRMerkleBlockEqual(b, c))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRMerkleBlockEqual() test 1\n", __func__);
+    if (!LWMerkleBlockEqual(b, c))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWMerkleBlockEqual() test 1\n", __func__);
 
     c->height++;
-    if (BRMerkleBlockEqual(b, c)) // fail if equal
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRMerkleBlockEqual() test 2\n", __func__);
+    if (LWMerkleBlockEqual(b, c)) // fail if equal
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWMerkleBlockEqual() test 2\n", __func__);
 
-    if (c) BRMerkleBlockFree(c);
+    if (c) LWMerkleBlockFree(c);
 
 
-    if (b) BRMerkleBlockFree(b);
+    if (b) LWMerkleBlockFree(b);
     return r;
 }
 
-int BRPaymentProtocolTests()
+int LWPaymentProtocolTests()
 {
     int r = 1;
     const char buf1[] = "\x08\x01\x12\x0b\x78\x35\x30\x39\x2b\x73\x68\x61\x32\x35\x36\x1a\xb8\x1d\x0a\xc9\x0b\x30\x82"
@@ -2329,44 +2269,44 @@ int BRPaymentProtocolTests()
     memcpy(buf3, buf1, sizeof(buf1) - 1);
     memcpy(buf3 + (sizeof(buf1) - 1), buf2, sizeof(buf2) - 1);
 
-    BRPaymentProtocolRequest *req = BRPaymentProtocolRequestParse(buf3, sizeof(buf3));
-    uint8_t buf4[BRPaymentProtocolRequestSerialize(req, NULL, 0)];
-    size_t len = BRPaymentProtocolRequestSerialize(req, buf4, sizeof(buf4));
+    LWPaymentProtocolRequest *req = LWPaymentProtocolRequestParse(buf3, sizeof(buf3));
+    uint8_t buf4[LWPaymentProtocolRequestSerialize(req, NULL, 0)];
+    size_t len = LWPaymentProtocolRequestSerialize(req, buf4, sizeof(buf4));
     int i = 0;
 
     if (len != sizeof(buf3) || memcmp(buf3, buf4, len) != 0) // check if parse/serialize produces same result
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolRequestParse/Serialize() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolRequestParse/Serialize() test 1\n", __func__);
 
     do {
-        uint8_t buf5[BRPaymentProtocolRequestCert(req, NULL, 0, i)];
+        uint8_t buf5[LWPaymentProtocolRequestCert(req, NULL, 0, i)];
     
-        len = BRPaymentProtocolRequestCert(req, buf5, sizeof(buf5), i);
+        len = LWPaymentProtocolRequestCert(req, buf5, sizeof(buf5), i);
         if (len > 0) i++;
     } while (len > 0);
 
     // check for a chain of 3 certificates
-    if (i != 3) r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolRequestCert() test 1\n", __func__);
+    if (i != 3) r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolRequestCert() test 1\n", __func__);
     
     if (req->details->expires == 0 || req->details->expires >= time(NULL)) // check that request is expired
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolRequest->details->expires test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolRequest->details->expires test 1\n", __func__);
     
-    if (req) BRPaymentProtocolRequestFree(req);
+    if (req) LWPaymentProtocolRequestFree(req);
 
     const char buf5[] = "\x0a\x00\x12\x5f\x54\x72\x61\x6e\x73\x61\x63\x74\x69\x6f\x6e\x20\x72\x65\x63\x65\x69\x76\x65"
     "\x64\x20\x62\x79\x20\x42\x69\x74\x50\x61\x79\x2e\x20\x49\x6e\x76\x6f\x69\x63\x65\x20\x77\x69\x6c\x6c\x20\x62\x65"
     "\x20\x6d\x61\x72\x6b\x65\x64\x20\x61\x73\x20\x70\x61\x69\x64\x20\x69\x66\x20\x74\x68\x65\x20\x74\x72\x61\x6e\x73"
     "\x61\x63\x74\x69\x6f\x6e\x20\x69\x73\x20\x63\x6f\x6e\x66\x69\x72\x6d\x65\x64\x2e";
-    BRPaymentProtocolACK *ack = BRPaymentProtocolACKParse((const uint8_t *)buf5, sizeof(buf5) - 1);
-    uint8_t buf6[BRPaymentProtocolACKSerialize(ack, NULL, 0)];
+    LWPaymentProtocolACK *ack = LWPaymentProtocolACKParse((const uint8_t *)buf5, sizeof(buf5) - 1);
+    uint8_t buf6[LWPaymentProtocolACKSerialize(ack, NULL, 0)];
 
-    len = BRPaymentProtocolACKSerialize(ack, buf6, sizeof(buf6));
+    len = LWPaymentProtocolACKSerialize(ack, buf6, sizeof(buf6));
     if (len != sizeof(buf5) - 1 || memcmp(buf5, buf6, len) != 0) // check if parse/serialize produces same result
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolACKParse/Serialize() test\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolACKParse/Serialize() test\n", __func__);
     
     printf("\n");
     if (ack->memo) printf("%s\n", ack->memo);
     // check that memo is not NULL
-    if (! ack->memo) r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolACK->memo test\n", __func__);
+    if (! ack->memo) r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolACK->memo test\n", __func__);
 
     const char buf7[] = "\x12\x0b\x78\x35\x30\x39\x2b\x73\x68\x61\x32\x35\x36\x1a\xbe\x15\x0a\xfe\x0b\x30\x82\x05\xfa"
     "\x30\x82\x04\xe2\xa0\x03\x02\x01\x02\x02\x10\x09\x0b\x35\xca\x5c\x5b\xf1\xb9\x8b\x3d\x8f\x9f\x4a\x77\x55\xd6\x30"
@@ -2484,187 +2424,187 @@ int BRPaymentProtocolTests()
     "\x7b\x5d\x76\x05\x3a\x58\x40\xbc\x4d\x61\x04\xdd\x87\xef\xc3\x1b\xcc\x3a\x8a\xef\xc3\x10\x02\x35\xbe\x61\xc0\x3a"
     "\x50\x55\x66\x77\x71\x85\xdd\x6f\x93\x2b\xae\xb5\xd5\xe2\xd4\x39\x8d\x01\x14\x0d\x48";
 
-    req = BRPaymentProtocolRequestParse((const uint8_t *)buf7, sizeof(buf7) - 1);
+    req = LWPaymentProtocolRequestParse((const uint8_t *)buf7, sizeof(buf7) - 1);
 
-    uint8_t buf8[BRPaymentProtocolRequestSerialize(req, NULL, 0)];
+    uint8_t buf8[LWPaymentProtocolRequestSerialize(req, NULL, 0)];
 
-    len = BRPaymentProtocolRequestSerialize(req, buf8, sizeof(buf8));
+    len = LWPaymentProtocolRequestSerialize(req, buf8, sizeof(buf8));
     if (len != sizeof(buf7) - 1 || memcmp(buf7, buf8, len) != 0) // check if parse/serialize produces same result
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolRequestParse/Serialize() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolRequestParse/Serialize() test 2\n", __func__);
     i = 0;
     
     do {
-        uint8_t buf9[BRPaymentProtocolRequestCert(req, NULL, 0, i)];
+        uint8_t buf9[LWPaymentProtocolRequestCert(req, NULL, 0, i)];
         
-        len = BRPaymentProtocolRequestCert(req, buf9, sizeof(buf9), i);
+        len = LWPaymentProtocolRequestCert(req, buf9, sizeof(buf9), i);
         if (len > 0) i++;
     } while (len > 0);
     
     // check for a chain of 2 certificates
-    if (i != 2) r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolRequestCert() test 2\n", __func__);
+    if (i != 2) r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolRequestCert() test 2\n", __func__);
     
     if (req->details->expires == 0 || req->details->expires >= time(NULL)) // check that request is expired
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolRequest->details->expires test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolRequest->details->expires test 2\n", __func__);
     
-    if (req) BRPaymentProtocolRequestFree(req);
+    if (req) LWPaymentProtocolRequestFree(req);
     
     // test garbage input
     const char buf9[] = "jfkdlasjfalk;sjfal;jflsadjfla;s";
     
-    req = BRPaymentProtocolRequestParse((const uint8_t *)buf9, sizeof(buf9) - 1);
+    req = LWPaymentProtocolRequestParse((const uint8_t *)buf9, sizeof(buf9) - 1);
     
-    uint8_t buf0[(req) ? BRPaymentProtocolRequestSerialize(req, NULL, 0) : 0];
+    uint8_t buf0[(req) ? LWPaymentProtocolRequestSerialize(req, NULL, 0) : 0];
 
-    len = (req) ? BRPaymentProtocolRequestSerialize(req, buf0, sizeof(buf0)) : 0;
+    len = (req) ? LWPaymentProtocolRequestSerialize(req, buf0, sizeof(buf0)) : 0;
     if (len > 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolRequestParse/Serialize() test 3\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolRequestParse/Serialize() test 3\n", __func__);
     
     printf("                                    ");
     return r;
 }
 
-int BRPaymentProtocolEncryptionTests()
+int LWPaymentProtocolEncryptionTests()
 {
     int r = 1;
-    BRKey senderKey, receiverKey;
+    LWKey senderKey, receiverKey;
     uint8_t id[32] = { 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00,
                        0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00 };
     
-    BRKeySetSecret(&senderKey, &uint256("0000000000000000000000000000000000000000000000000000000000000001"), 1);
-    BRKeySetSecret(&receiverKey, &uint256("0000000000000000000000000000000000000000000000000000000000000002"), 1);
+    LWKeySetSecret(&senderKey, &uint256("0000000000000000000000000000000000000000000000000000000000000001"), 1);
+    LWKeySetSecret(&receiverKey, &uint256("0000000000000000000000000000000000000000000000000000000000000002"), 1);
         
-    BRPaymentProtocolInvoiceRequest *req = BRPaymentProtocolInvoiceRequestNew(&senderKey, 0, NULL, NULL, 0, NULL, NULL,
+    LWPaymentProtocolInvoiceRequest *req = LWPaymentProtocolInvoiceRequestNew(&senderKey, 0, NULL, NULL, 0, NULL, NULL,
                                                                               NULL, 0);
     
-    if (! req) r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolInvoiceRequestNew() test\n", __func__);
+    if (! req) r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolInvoiceRequestNew() test\n", __func__);
     
-    uint8_t buf0[(req) ? BRPaymentProtocolInvoiceRequestSerialize(req, NULL, 0) : 0];
-    size_t len0 = (req) ? BRPaymentProtocolInvoiceRequestSerialize(req, buf0, sizeof(buf0)) : 0;
+    uint8_t buf0[(req) ? LWPaymentProtocolInvoiceRequestSerialize(req, NULL, 0) : 0];
+    size_t len0 = (req) ? LWPaymentProtocolInvoiceRequestSerialize(req, buf0, sizeof(buf0)) : 0;
     
-    if (req) BRPaymentProtocolInvoiceRequestFree(req);
-    req = BRPaymentProtocolInvoiceRequestParse(buf0, len0);
+    if (req) LWPaymentProtocolInvoiceRequestFree(req);
+    req = LWPaymentProtocolInvoiceRequestParse(buf0, len0);
     
     if (! req || memcmp(req->senderPubKey.pubKey, senderKey.pubKey, 33) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolInvoiceRequestSerialize/Parse() test\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolInvoiceRequestSerialize/Parse() test\n", __func__);
     
-    if (req) BRPaymentProtocolInvoiceRequestFree(req);
+    if (req) LWPaymentProtocolInvoiceRequestFree(req);
     
     const char buf[] = "\x0a\x00\x12\x5f\x54\x72\x61\x6e\x73\x61\x63\x74\x69\x6f\x6e\x20\x72\x65\x63\x65\x69\x76\x65"
     "\x64\x20\x62\x79\x20\x42\x69\x74\x50\x61\x79\x2e\x20\x49\x6e\x76\x6f\x69\x63\x65\x20\x77\x69\x6c\x6c\x20\x62\x65"
     "\x20\x6d\x61\x72\x6b\x65\x64\x20\x61\x73\x20\x70\x61\x69\x64\x20\x69\x66\x20\x74\x68\x65\x20\x74\x72\x61\x6e\x73"
     "\x61\x63\x74\x69\x6f\x6e\x20\x69\x73\x20\x63\x6f\x6e\x66\x69\x72\x6d\x65\x64\x2e";
     
-    BRPaymentProtocolMessage *msg1 = BRPaymentProtocolMessageNew(BRPaymentProtocolMessageTypeACK, (uint8_t *)buf,
+    LWPaymentProtocolMessage *msg1 = LWPaymentProtocolMessageNew(LWPaymentProtocolMessageTypeACK, (uint8_t *)buf,
                                                                  sizeof(buf) - 1, 1, NULL, id, sizeof(id));
     
-    if (! msg1) r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolMessageNew() test\n", __func__);
+    if (! msg1) r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolMessageNew() test\n", __func__);
     
-    uint8_t buf1[(msg1) ? BRPaymentProtocolMessageSerialize(msg1, NULL, 0) : 0];
-    size_t len1 = (msg1) ? BRPaymentProtocolMessageSerialize(msg1, buf1, sizeof(buf1)) : 0;
+    uint8_t buf1[(msg1) ? LWPaymentProtocolMessageSerialize(msg1, NULL, 0) : 0];
+    size_t len1 = (msg1) ? LWPaymentProtocolMessageSerialize(msg1, buf1, sizeof(buf1)) : 0;
     
-    if (msg1) BRPaymentProtocolMessageFree(msg1);
-    msg1 = BRPaymentProtocolMessageParse(buf1, len1);
+    if (msg1) LWPaymentProtocolMessageFree(msg1);
+    msg1 = LWPaymentProtocolMessageParse(buf1, len1);
     
     if (! msg1 || msg1->msgLen != sizeof(buf) - 1 || memcmp(buf, msg1->message, sizeof(buf) - 1) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolMessageSerialize/Parse() test\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolMessageSerialize/Parse() test\n", __func__);
     
-    if (msg1) BRPaymentProtocolMessageFree(msg1);
+    if (msg1) LWPaymentProtocolMessageFree(msg1);
     
-    BRPaymentProtocolEncryptedMessage *msg2 =
-        BRPaymentProtocolEncryptedMessageNew(BRPaymentProtocolMessageTypeACK, (uint8_t *)buf, sizeof(buf) - 1,
+    LWPaymentProtocolEncryptedMessage *msg2 =
+        LWPaymentProtocolEncryptedMessageNew(LWPaymentProtocolMessageTypeACK, (uint8_t *)buf, sizeof(buf) - 1,
                                              &receiverKey, &senderKey, time(NULL), id, sizeof(id), 1, NULL);
 
-    if (! msg2) r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolEncryptedMessageNew() test\n", __func__);
+    if (! msg2) r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolEncryptedMessageNew() test\n", __func__);
     
-    uint8_t buf2[(msg2) ? BRPaymentProtocolEncryptedMessageSerialize(msg2, NULL, 0) : 0];
-    size_t len2 = (msg2) ? BRPaymentProtocolEncryptedMessageSerialize(msg2, buf2, sizeof(buf2)) : 0;
+    uint8_t buf2[(msg2) ? LWPaymentProtocolEncryptedMessageSerialize(msg2, NULL, 0) : 0];
+    size_t len2 = (msg2) ? LWPaymentProtocolEncryptedMessageSerialize(msg2, buf2, sizeof(buf2)) : 0;
     
-    if (msg2) BRPaymentProtocolEncryptedMessageFree(msg2);
-    msg2 = BRPaymentProtocolEncryptedMessageParse(buf2, len2);
+    if (msg2) LWPaymentProtocolEncryptedMessageFree(msg2);
+    msg2 = LWPaymentProtocolEncryptedMessageParse(buf2, len2);
     
     if (! msg2 || msg2->msgLen != sizeof(buf) - 1 + 16)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolEncryptedMessageSerialize/Parse() test\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolEncryptedMessageSerialize/Parse() test\n", __func__);
 
-    if (msg2 && ! BRPaymentProtocolEncryptedMessageVerify(msg2, &receiverKey))
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolEncryptedMessageVerify() test\n", __func__);
+    if (msg2 && ! LWPaymentProtocolEncryptedMessageVerify(msg2, &receiverKey))
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolEncryptedMessageVerify() test\n", __func__);
 
     uint8_t out[(msg2) ? msg2->msgLen : 0];
-    size_t outLen = BRPaymentProtocolEncryptedMessageDecrypt(msg2, out, sizeof(out), &receiverKey);
+    size_t outLen = LWPaymentProtocolEncryptedMessageDecrypt(msg2, out, sizeof(out), &receiverKey);
     
     if (outLen != sizeof(buf) - 1 || memcmp(buf, out, outLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolEncryptedMessageDecrypt() test 1\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolEncryptedMessageDecrypt() test 1\n", __func__);
     
-    if (msg2) outLen = BRPaymentProtocolEncryptedMessageDecrypt(msg2, out, sizeof(out), &senderKey);
+    if (msg2) outLen = LWPaymentProtocolEncryptedMessageDecrypt(msg2, out, sizeof(out), &senderKey);
     
     if (outLen != sizeof(buf) - 1 || memcmp(buf, out, outLen) != 0)
-        r = 0, fprintf(stderr, "***FAILED*** %s: BRPaymentProtocolEncryptedMessageDecrypt() test 2\n", __func__);
+        r = 0, fprintf(stderr, "***FAILED*** %s: LWPaymentProtocolEncryptedMessageDecrypt() test 2\n", __func__);
     
-    if (msg2) BRPaymentProtocolEncryptedMessageFree(msg2);
+    if (msg2) LWPaymentProtocolEncryptedMessageFree(msg2);
     return r;
 }
 
-void BRPeerAcceptMessageTest(BRPeer *peer, const uint8_t *msg, size_t len, const char *type);
+void LWPeerAcceptMessageTest(LWPeer *peer, const uint8_t *msg, size_t len, const char *type);
 
-int BRPeerTests()
+int LWPeerTests()
 {
     int r = 1;
-    BRPeer *p = BRPeerNew(BR_CHAIN_PARAMS.magicNumber);
+    LWPeer *p = LWPeerNew(LW_CHAIN_PARAMS.magicNumber);
     const char msg[] = "my message";
     
-    BRPeerAcceptMessageTest(p, (const uint8_t *)msg, sizeof(msg) - 1, "inv");
+    LWPeerAcceptMessageTest(p, (const uint8_t *)msg, sizeof(msg) - 1, "inv");
     return r;
 }
 
-int BRRunTests()
+int LWRunTests()
 {
     int fail = 0;
     
-    printf("BRIntsTests...                      ");
-    printf("%s\n", (BRIntsTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRArrayTests...                     ");
-    printf("%s\n", (BRArrayTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRSetTests...                       ");
-    printf("%s\n", (BRSetTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRBase58Tests...                    ");
-    printf("%s\n", (BRBase58Tests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRBech32Tests...                    ");
-    printf("%s\n", (BRBech32Tests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRHashTests...                      ");
-    printf("%s\n", (BRHashTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRMacTests...                       ");
-    printf("%s\n", (BRMacTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRDrbgTests...                      ");
-    printf("%s\n", (BRDrbgTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRCypherTests...                    ");
-    printf("%s\n", (BRCypherTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRAuthEncryptTests...               ");
-    printf("%s\n", (BRAuthEncryptTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRKeyTests...                       ");
-    printf("%s\n", (BRKeyTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRBIP38KeyTests...                  ");
+    printf("LWIntsTests...                      ");
+    printf("%s\n", (LWIntsTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWArrayTests...                     ");
+    printf("%s\n", (LWArrayTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWSetTests...                       ");
+    printf("%s\n", (LWSetTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWBase58Tests...                    ");
+    printf("%s\n", (LWBase58Tests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWBech32Tests...                    ");
+    printf("%s\n", (LWBech32Tests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWHashTests...                      ");
+    printf("%s\n", (LWHashTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWMacTests...                       ");
+    printf("%s\n", (LWMacTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWDrbgTests...                      ");
+    printf("%s\n", (LWDrbgTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWCypherTests...                    ");
+    printf("%s\n", (LWCypherTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWAuthEncryptTests...               ");
+    printf("%s\n", (LWAuthEncryptTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWKeyTests...                       ");
+    printf("%s\n", (LWKeyTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWBIP38KeyTests...                  ");
 #if SKIP_BIP38
     printf("SKIPPED\n");
 #else
-    printf("%s\n", (BRBIP38KeyTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("%s\n", (LWBIP38KeyTests()) ? "success" : (fail++, "***FAIL***"));
 #endif
-    printf("BRAddressTests...                   ");
-    printf("%s\n", (BRAddressTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRBIP39MnemonicTests...             ");
-    printf("%s\n", (BRBIP39MnemonicTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRBIP32SequenceTests...             ");
-    printf("%s\n", (BRBIP32SequenceTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRTransactionTests...               ");
-    printf("%s\n", (BRTransactionTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRWalletTests...                    ");
-    printf("%s\n", (BRWalletTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRBloomFilterTests...               ");
-    printf("%s\n", (BRBloomFilterTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRMerkleBlockTests...               ");
-    printf("%s\n", (BRMerkleBlockTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRPaymentProtocolTests...           ");
-    printf("%s\n", (BRPaymentProtocolTests()) ? "success" : (fail++, "***FAIL***"));
-    printf("BRPaymentProtocolEncryptionTests... ");
-    printf("%s\n", (BRPaymentProtocolEncryptionTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWAddressTests...                   ");
+    printf("%s\n", (LWAddressTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWBIP39MnemonicTests...             ");
+    printf("%s\n", (LWBIP39MnemonicTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWBIP32SequenceTests...             ");
+    printf("%s\n", (LWBIP32SequenceTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWTransactionTests...               ");
+    printf("%s\n", (LWTransactionTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWWalletTests...                    ");
+    printf("%s\n", (LWWalletTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWBloomFilterTests...               ");
+    printf("%s\n", (LWBloomFilterTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWMerkleBlockTests...               ");
+    printf("%s\n", (LWMerkleBlockTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWPaymentProtocolTests...           ");
+    printf("%s\n", (LWPaymentProtocolTests()) ? "success" : (fail++, "***FAIL***"));
+    printf("LWPaymentProtocolEncryptionTests... ");
+    printf("%s\n", (LWPaymentProtocolEncryptionTests()) ? "success" : (fail++, "***FAIL***"));
     printf("\n");
     
     if (fail > 0) printf("%d TEST FUNCTION(S) ***FAILED***\n", fail);
@@ -2673,7 +2613,7 @@ int BRRunTests()
     return (fail == 0);
 }
 
-#ifndef BITCOIN_TEST_NO_MAIN
+#ifndef LITECOIN_TEST_NO_MAIN
 void syncStarted(void *info)
 {
     printf("sync started\n");
@@ -2691,32 +2631,32 @@ void txStatusUpdate(void *info)
 
 int main(int argc, const char *argv[])
 {
-    int r = BRRunTests();
+    int r = LWRunTests();
     
 //    int err = 0;
 //    UInt512 seed = UINT512_ZERO;
-//    BRMasterPubKey mpk = BR_MASTER_PUBKEY_NONE;
-//    BRWallet *wallet;
-//    BRPeerManager *manager;
+//    LWMasterPubKey mpk = LW_MASTER_PUBKEY_NONE;
+//    LWWallet *wallet;
+//    LWPeerManager *manager;
 //
-//    //BRBIP39DeriveKey(seed.u8, "video tiger report bid suspect taxi mail argue naive layer metal surface", NULL);
-//    BRBIP39DeriveKey(seed.u8, "axis husband project any sea patch drip tip spirit tide bring belt", NULL);
-//    mpk = BRBIP32MasterPubKey(&seed, sizeof(seed));
+//    //LWBIP39DeriveKey(seed.u8, "video tiger report bid suspect taxi mail argue naive layer metal surface", NULL);
+//    LWBIP39DeriveKey(seed.u8, "axis husband project any sea patch drip tip spirit tide bring belt", NULL);
+//    mpk = LWBIP32MasterPubKey(&seed, sizeof(seed));
 //
-//    wallet = BRWalletNew(NULL, 0, mpk);
-//    BRWalletSetCallbacks(wallet, wallet, walletBalanceChanged, walletTxAdded, walletTxUpdated, walletTxDeleted);
-//    printf("wallet created with first receive address: %s\n", BRWalletReceiveAddress(wallet).s);
+//    wallet = LWWalletNew(NULL, 0, mpk);
+//    LWWalletSetCallbacks(wallet, wallet, walletBalanceChanged, walletTxAdded, walletTxUpdated, walletTxDeleted);
+//    printf("wallet created with first receive address: %s\n", LWWalletReceiveAddress(wallet).s);
 //
-//    manager = BRPeerManagerNew(&BRMainNetParams, wallet, BIP39_CREATION_TIME, NULL, 0, NULL, 0);
-//    BRPeerManagerSetCallbacks(manager, manager, syncStarted, syncStopped, txStatusUpdate, NULL, NULL, NULL, NULL);
+//    manager = LWPeerManagerNew(&LWMainNetParams, wallet, BIP39_CREATION_TIME, NULL, 0, NULL, 0);
+//    LWPeerManagerSetCallbacks(manager, manager, syncStarted, syncStopped, txStatusUpdate, NULL, NULL, NULL, NULL);
 //
-//    BRPeerManagerConnect(manager);
-//    while (err == 0 && BRPeerManagerPeerCount(manager) > 0) err = sleep(1);
+//    LWPeerManagerConnect(manager);
+//    while (err == 0 && LWPeerManagerPeerCount(manager) > 0) err = sleep(1);
 //    if (err != 0) printf("sleep got a signal\n");
 //
-//    BRPeerManagerDisconnect(manager);
-//    BRPeerManagerFree(manager);
-//    BRWalletFree(wallet);
+//    LWPeerManagerDisconnect(manager);
+//    LWPeerManagerFree(manager);
+//    LWWalletFree(wallet);
 //    sleep(5);
     
     return (r) ? 0 : 1;
